@@ -10,8 +10,6 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 
 // import { useTranslate } from 'src/locales';
 
-// import { useSettingsContext } from 'src/components/settings';
-
 import { createTheme } from './create-theme';
 
 // ----------------------------------------------------------------------
@@ -21,8 +19,6 @@ type Props = {
 };
 
 export function ThemeProvider({ children }: Props) {
-  // const { currentLang } = useTranslate();
-
   const theme = createTheme();
 
   return (

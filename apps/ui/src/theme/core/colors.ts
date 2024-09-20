@@ -1,4 +1,4 @@
-{
+export default {
   "primary": {
     "lighter": "#C8FAD6",
     "light": "#5BE49B",

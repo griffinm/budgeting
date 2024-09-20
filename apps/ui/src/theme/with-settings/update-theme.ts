@@ -1,8 +1,8 @@
-import type { SettingsState } from 'src/components/settings';
+import type { SettingsState } from '../settings';
 import type { Theme, Components } from '@mui/material/styles';
 
-import COLORS from '../core/colors.json';
-import PRIMARY_COLOR from './primary-color.json';
+import COLORS from '../core/colors';
+import PRIMARY_COLOR from './primary-color';
 import { components as coreComponents } from '../core/components';
 import { hexToRgbChannel, createPaletteChannel } from '../styles';
 import { primary as corePrimary, grey as coreGreyPalette } from '../core/palette';

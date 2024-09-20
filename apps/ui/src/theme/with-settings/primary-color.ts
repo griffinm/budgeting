@@ -1,4 +1,4 @@
-{
+export default {
   "cyan": {
     "lighter": "#CCF4FE",
     "light": "#68CDF9",

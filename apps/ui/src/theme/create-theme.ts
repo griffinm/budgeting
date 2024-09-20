@@ -1,14 +1,14 @@
 import type { Theme } from '@mui/material/styles';
-import type { SettingsState } from 'src/components/settings';
+import type { SettingsState } from './settings';
 
-import { extendTheme } from '@mui/material/styles'
+import { experimental_extendTheme as extendTheme } from '@mui/material/styles';
 
 import { setFont } from './styles/utils';
 import { overridesTheme } from './overrides-theme';
 import { shadows, typography, components, colorSchemes, customShadows } from './core';
 import { updateCoreWithSettings, updateComponentsWithSettings } from './with-settings/update-theme';
 
-import type { ThemeLocaleComponents } from './types';
+// ----------------------------------------------------------------------
 
 function shouldSkipGeneratingVar(keys: string[], value: string | number): boolean {
   const skipGlobalKeys = [
@@ -19,7 +19,7 @@ function shouldSkipGeneratingVar(keys: string[], value: string | number): boolea
     'cssVarPrefix',
     'unstable_sxConfig',
     'typography',
-    // 'transitions',
+    'transitions',
   ];
 
   const skipPaletteKeys: {
@@ -43,21 +43,19 @@ function shouldSkipGeneratingVar(keys: string[], value: string | number): boolea
 }
 
 export function createTheme(): Theme {
+  
   const initialTheme = {
     colorSchemes,
-    shadows: shadows('light'),
-    customShadows: customShadows('light'),
+    shadows: shadows('dark'),
+    customShadows: customShadows('dark'),
     shape: { borderRadius: 8 },
     components,
     typography,
     cssVarPrefix: '',
     shouldSkipGeneratingVar,
-    palette: {
-      mode: 'light',
-    },
   };
 
-  const theme = extendTheme(initialTheme, overridesTheme, { cssVariables: true });
+  const theme = extendTheme(initialTheme, overridesTheme);
 
   return theme;
 }
