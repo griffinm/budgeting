@@ -16,7 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "@budgeting/types": ["apps/types/src/index.ts"],
-      "@budgeting/ui/*": ["apps/ui/src/*"]
+      "@budgeting/ui/*": ["apps/ui/src/*"],
+      "@budgeting/api/*": ["apps/api/src/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]

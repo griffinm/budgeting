@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { AuthService } from "@budgeting/api/auth";
 import { AuthController } from "./auth.controller";
 import { AuthGuard } from "./auth.guard";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -13,6 +13,6 @@ import { PrismaModule } from "../prisma/prisma.module";
   controllers: [
     AuthController,
   ],
-  exports: [AuthService],
+  exports: [AuthService, AuthGuard],
 })
 export class AuthModule {}

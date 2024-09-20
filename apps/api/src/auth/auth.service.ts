@@ -16,6 +16,28 @@ export class AuthService {
     return this.prisma.user.findUnique({ where: { id: decoded.userId } });
   }
 
+  async signJwt(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const payload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+      accountId: user.accountId,
+      name: user.name,
+    };
+
+    const token = jwt.sign({
+      // This sets the expiration to 1 day from now
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24),
+      ...payload,
+    }, process.env.JWT_TOKEN_SECRET);
+
+    return token;
+  }
+
   async signInWithPassword(
     email: string,
     password: string,
@@ -33,9 +55,15 @@ export class AuthService {
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
+      accountId: user.accountId,
+      name: user.name,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_TOKEN_SECRET, { expiresIn: '60d' });
+    const token = jwt.sign({
+      // This sets the expiration to 1 day from now
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24),
+      ...payload,
+    }, process.env.JWT_TOKEN_SECRET);
 
     return token;
   }

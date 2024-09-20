@@ -14,7 +14,8 @@ export class AuthController {
   ): Promise<SignInResponse> {
     try {
       const jwt = await this.authService.signInWithPassword(signInDto.email, signInDto.password);
-      return { jwt };
+      const user = await this.authService.validateJwt(jwt);
+      return { jwt, user };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }

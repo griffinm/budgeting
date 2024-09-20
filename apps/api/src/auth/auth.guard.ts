@@ -3,14 +3,15 @@ import {
   ExecutionContext,
   Injectable,
   HttpStatus,
+  HttpException
 } from '@nestjs/common';
-import { AuthService } from '../auth/auth.service';
-import { HttpException } from '@nestjs/common';
-import { Request } from 'express';
+import { AuthService } from "./auth.service";  // Update this line
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -26,10 +27,5 @@ export class AuthGuard implements CanActivate {
     }
 
     return true;
-  }
-
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
   }
 }

@@ -22,9 +22,18 @@ export class UsersService {
       throw new BadRequestException('User already exists');
     }
 
+    // Create an account for the user
+    // TODO: ability to add a user to an existing account instead of creating a new one
+    this.logger.debug(`Creating account for user with email: ${createUserDto.email}`);
+    const account = await this.prisma.account.create({
+      data: {},
+    });
+    this.logger.debug(`New Account created with id: ${account.id.substring(0, 7)}`);
+
     const user = await this.prisma.user.create({
       data: {
         ...createUserDto,
+        accountId: account.id,
         password: await hash(createUserDto.password, 12),
       },
     });

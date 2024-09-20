@@ -22,6 +22,11 @@ export class UserEntity {
   @IsString()
   name: string;
 
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  accountId: string;
+
   @IsString()
   @IsNotEmpty()
   password: string;
