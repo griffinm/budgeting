@@ -5,20 +5,32 @@ import { urls } from "@budgeting/ui/utils/urls";
 import { createUser } from "@budgeting/ui/utils/api";
 import cookies from 'universal-cookie';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from "@budgeting/ui/providers/UserProvider";
 
 export const SignUpView = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isValid()) {
+      return;
+    }
+    // TODO: Handle an error
     const response = await createUser({ name, email, password });
-    const { jwt } = response.data;
+    const { jwt, user } = response.data;
     const cookie = new cookies();
     cookie.set('jwt', jwt);
+    setUser(user);
     navigate(urls.home);
+  }
+
+  const isValid = () => {
+    // TODO add error messages
+    return name.length > 0 && email.length > 0 && password.length > 0;
   }
 
   return (
