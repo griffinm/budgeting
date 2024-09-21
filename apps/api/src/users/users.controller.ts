@@ -1,10 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete, 
+  UseGuards, 
+  Req 
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from "@budgeting/api/auth";
 import { SignInResponse } from '@budgeting/types';
 import { AuthService } from '@budgeting/api/auth';
+import { AuthUser, RequestWithUser } from '@budgeting/types';
 
 @Controller('users')
 export class UsersController {
@@ -12,6 +23,19 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
   ) {}
+
+  @Get('current')
+  @UseGuards(AuthGuard)
+  async current(
+    @Req() req: RequestWithUser,
+  ): Promise<AuthUser> {
+    return {
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email,
+      accountId: req.user.accountId,
+    };
+  }
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<SignInResponse> {
