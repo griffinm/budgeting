@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useScrollToTop } from './hooks/useScrollToTop';
 import { AppRoutes } from './routes';
 import { useColorScheme } from '@mui/material/styles';
+import { UserProvider } from './providers/UserProvider';
 
 export function App() {
   useScrollToTop();
@@ -12,8 +13,8 @@ export function App() {
   }, [setMode]);
 
   return (
-    <div>
+    <UserProvider>
       <AppRoutes />
-    </div>
+    </UserProvider>
   );
 }

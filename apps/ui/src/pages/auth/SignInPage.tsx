@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet';
-import { SignInView } from '@budgeting/ui/views'
-;
+import { SignInView } from '@budgeting/ui/views';
+
 export default function SignIn() {
   <Helmet>
     <title>Sign In | {import.meta.env.UI_APP_NAME}</title>

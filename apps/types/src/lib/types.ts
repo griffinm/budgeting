@@ -4,14 +4,16 @@ export interface RequestWithUser extends Request {
   user: User;
 }
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  accountId: string;
+}
+
 export interface SignInResponse {
   jwt: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    accountId: string;
-  };
+  user: AuthUser;
 }
 
 export interface JwtPayload {

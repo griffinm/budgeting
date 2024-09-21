@@ -1,29 +1,18 @@
 import { Outlet } from "react-router-dom";
-import { Card, CardHeader } from "@mui/material";
+import { Card } from "@mui/material";
 import { Logo } from "@budgeting/ui/components";
-import { components } from "@budgeting/ui/theme/core/components";
 
-interface Props {
-  title: string;
-}
-
-export function AuthLayout({
-  title,
-}: Props) {
-
-  components.MuiCard
-
+export function AuthLayout() {
   return (
-    <div className="flex flex-col h-screen justify-center items-center">
+    <div className="flex flex-col h-screen justify-center items-center bg-gradient-to-r from-green-50 to-green-100">
       <div className="w-[90%] sm:w-[400px]">
         <Card sx={{ p: 3 }}>
           <div className="flex flex-col items-center">
             <Logo />
           </div>
-          <div className="pb-5">
-            <CardHeader title={title} />
+          <div className="py-3">
+            <Outlet />
           </div>
-          <Outlet />
         </Card>
       
       </div>

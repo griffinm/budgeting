@@ -4,14 +4,16 @@ import { AppLayout, AuthLayout } from '../layouts';
 import { Loading } from "../components";
 
 const SignInPage = lazy(() => import('../pages/auth/SignInPage'));
+const SignUpPage = lazy(() => import('../pages/auth/SignUpPage'));
 const HomePage = lazy(() => import('../pages/home'));
 
 export function AppRoutes() {
 
   const signInRoutes = () => {
     return (
-      <Route element={<AuthLayout title="Sign In" />}>
+      <Route element={<AuthLayout />}>
         <Route path="/sign-in" element={withSuspense(SignInPage)} />
+        <Route path="/sign-up" element={withSuspense(SignUpPage)} />
       </Route>
     )
   }
