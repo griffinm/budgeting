@@ -39,7 +39,7 @@ export function SignInView() {
   }
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <div className="flex flex-col items-center py-5">
         <Typography variant="h4">Sign In</Typography>
       </div>

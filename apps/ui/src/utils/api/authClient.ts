@@ -9,5 +9,5 @@ export const signIn = async({
   email: string;
   password: string;
 }): Promise<AxiosResponse<SignInResponse>> => {
-  return baseClient.post('/auth/sign_in', { email, password });
+  return baseClient.post('/auth/sign-in', { email, password });
 };

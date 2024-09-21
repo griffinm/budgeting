@@ -15,7 +15,15 @@ export class AuthController {
     try {
       const jwt = await this.authService.signInWithPassword(signInDto.email, signInDto.password);
       const user = await this.authService.validateJwt(jwt);
-      return { jwt, user };
+      return { 
+        jwt, 
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          accountId: user.accountId,
+        }
+      };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }

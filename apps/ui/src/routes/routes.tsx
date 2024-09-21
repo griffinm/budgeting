@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from "react-router-dom";
 import { AppLayout, AuthLayout } from '../layouts';
 import { Loading } from "../components";
+import { UserProvider } from '@budgeting/ui/providers';
 
 const SignInPage = lazy(() => import('../pages/auth/SignInPage'));
 const SignUpPage = lazy(() => import('../pages/auth/SignUpPage'));

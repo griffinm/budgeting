@@ -3,7 +3,8 @@ import { AuthUser } from "@budgeting/types";
 import cookies from 'universal-cookie';
 import { getCurrentUser } from "../utils/api";
 import { Loading } from "@budgeting/ui/components";
-
+import { useNavigate } from "react-router-dom";
+import { urls } from "@budgeting/ui/utils/urls";
 interface UserContextProps {
   user?: AuthUser | null;
   setUser: (user: AuthUser) => void;
@@ -22,10 +23,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
     const jwt = new cookies().get('jwt');
-    if (!jwt || user?.id) return;
+    if (!jwt || user?.id) {
+      navigate(urls.signIn);
+      return;
+    }
 
     const fetchUser = async () => {
       setAuthLoading(true);
