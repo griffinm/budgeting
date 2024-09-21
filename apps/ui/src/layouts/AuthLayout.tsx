@@ -14,7 +14,6 @@ export function AuthLayout() {
             <Outlet />
           </div>
         </Card>
-      
       </div>
     </div>
   )
