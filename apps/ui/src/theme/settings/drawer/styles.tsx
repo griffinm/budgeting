@@ -7,8 +7,8 @@ import ButtonBase from '@mui/material/ButtonBase';
 
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
-import { Iconify } from '../../iconify';
-import { svgColorClasses } from '../../svg-color';
+import { Iconify } from '@budgeting/ui/theme/iconify';
+import { svgColorClasses } from '../../styles/svg-color';
 
 // ----------------------------------------------------------------------
 

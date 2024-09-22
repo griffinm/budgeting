@@ -41,6 +41,7 @@ import { buttonGroup } from './button-group';
 import { autocomplete } from './autocomplete';
 import { toggleButton } from './button-toggle';
 import { datePicker } from './mui-x-date-picker';
+import { RouterLink } from './router-link';
 
 // ----------------------------------------------------------------------
 
@@ -88,4 +89,5 @@ export const components = {
   ...buttonGroup,
   ...autocomplete,
   ...toggleButton,
+  ...RouterLink,
 };

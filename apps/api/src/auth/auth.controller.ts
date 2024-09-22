@@ -1,12 +1,26 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { SignInResponse } from '@budgeting/types';
+import { RequestWithUser, SignInResponse } from '@budgeting/types';
+import { PlaidService } from '@budgeting/plaid';
+import { AuthGuard } from './auth.guard';
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly plaidService: PlaidService,
+  ) {}
+
+  @Post("link-token")
+  @UseGuards(AuthGuard)
+  async createLinkToken(
+    @Req() req: RequestWithUser
+  ): Promise<{ linkToken: string }> {
+    const linkToken = await this.plaidService.createLinkToken(req.user.id);
+  return { linkToken };
+  }
 
   @Post("sign-in")
   async signInWithPassword(

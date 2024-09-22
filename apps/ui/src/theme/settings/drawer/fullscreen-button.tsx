@@ -3,9 +3,9 @@ import { useState, useCallback } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 
-import { Iconify } from 'src/components/iconify';
+import { Iconify } from '@budgeting/ui/theme/iconify';
 
-import { svgColorClasses } from '../../svg-color';
+import { svgColorClasses } from '../../styles/svg-color';
 
 // ----------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 import type { Shadows } from '@mui/material/styles';
 
-import { varAlpha } from '../styles';
+import { varAlpha } from '@budgeting/ui/theme/styles';
 import { grey, common } from './palette';
 
 import type { ThemeColorScheme } from '../types';

@@ -10,6 +10,7 @@
     "@emotion/styled": "^11.13.0",
     "@fontsource/barlow": "^5.1.0",
     "@fontsource/public-sans": "^5.1.0",
+    "@mui/icons-material": "^6.1.1",
     "@mui/lab": "^6.0.0-beta.10",
     "@mui/material": "^6.1.1",
     "@mui/material-nextjs": "^6.1.1",
@@ -40,6 +41,7 @@
     "universal-cookie": "^7.2.0"
   },
   "devDependencies": {
+    "@iconify/react": "^5.0.2",
     "@nestjs/schematics": "^10.0.1",
     "@nestjs/testing": "^10.0.2",
     "@nx-tools/nx-prisma": "^6.1.0",

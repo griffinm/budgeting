@@ -6,7 +6,7 @@ import { useTheme } from '@mui/material/styles';
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
-import { SvgColor } from '../../svg-color';
+import { SvgColor } from '../../styles/svg-color';
 import { Block, BlockOption } from './styles';
 
 import type { SettingsState } from '../types';

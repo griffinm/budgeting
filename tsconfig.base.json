@@ -15,9 +15,10 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@budgeting/api/*": ["apps/api/src/*"],
+      "@budgeting/plaid": ["apps/plaid/src/index.ts"],
       "@budgeting/types": ["apps/types/src/index.ts"],
-      "@budgeting/ui/*": ["apps/ui/src/*"],
-      "@budgeting/api/*": ["apps/api/src/*"]
+      "@budgeting/ui/*": ["apps/ui/src/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]

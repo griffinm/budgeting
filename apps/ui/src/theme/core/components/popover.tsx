@@ -2,7 +2,7 @@ import type { Theme, Components } from '@mui/material/styles';
 
 import { listClasses } from '@mui/material/List';
 
-import { paper } from '../../styles';
+import { paper } from '@budgeting/ui/theme/styles';
 
 // ----------------------------------------------------------------------
 

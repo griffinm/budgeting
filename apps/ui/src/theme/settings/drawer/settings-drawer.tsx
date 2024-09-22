@@ -12,7 +12,7 @@ import { paper, varAlpha } from 'src/theme/styles';
 import { defaultFont } from 'src/theme/core/typography';
 import PRIMARY_COLOR from 'src/theme/with-settings/primary-color.json';
 
-import { Iconify } from '../../iconify';
+import { Iconify } from '@budgeting/ui/theme/iconify';
 import { BaseOption } from './base-option';
 import { NavOptions } from './nav-options';
 import { Scrollbar } from '../../scrollbar';
