@@ -31,4 +31,47 @@ export class ConnectedAccountEntity {
   @IsDate()
   @IsOptional()
   deletedAt: Date;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidAccountId: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidMask: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidName: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidOfficialName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  plaidPersistId: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidSubtype: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidType: string;
+
+  @IsString()
+  @IsNotEmpty()
+  plaidAccessToken: string;
+
+  @Expose()
+  @IsString()
+  @IsNotEmpty()
+  plaidInstitutionId: string;
 }

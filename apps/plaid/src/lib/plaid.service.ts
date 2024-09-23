@@ -7,6 +7,8 @@ import {
   Products,
 } from "plaid";
 import { ConfigService } from "@nestjs/config";
+import { AccountBase } from "plaid";
+import { format } from "date-fns";
 
 @Injectable()
 export class PlaidService {
@@ -48,6 +50,38 @@ export class PlaidService {
     });
 
     return linkToken.data.link_token;
+  }
+
+  public async getAccounts(
+    accessToken: string,
+  ): Promise<{
+    institutionId?: string | null;
+    accounts: AccountBase[];
+  }> {
+    const startDate = new Date();
+    const endDate = new Date();
+    startDate.setDate(startDate.getDate() - 1);
+    const accountsResponse = await this.plaidClient.transactionsGet({
+      access_token: accessToken,
+      start_date: format(startDate, 'yyyy-MM-dd'),
+      end_date: format(endDate, 'yyyy-MM-dd'),
+    });
+
+    return {
+      institutionId: accountsResponse.data.item.institution_id,
+      accounts: accountsResponse.data.accounts,
+    };
+  }
+
+  public async exchangeToken(
+    userId: string, 
+    accessToken: string,
+  ): Promise<string> {
+    this.logger.debug(`Exchanging token for user ${userId.substring(0, 7)}`);
+    const exchangeResponse = await this.plaidClient.itemPublicTokenExchange({
+      public_token: accessToken,
+    });
+    return exchangeResponse.data.access_token;
   }
 
   private plaidClientConfiguration(): Configuration {
