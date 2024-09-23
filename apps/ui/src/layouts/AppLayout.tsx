@@ -4,11 +4,10 @@ import { Nav } from "@budgeting/ui/components";
 export function AppLayout() {
   return (
     <div className="flex flex-row h-screen">
-      <div className="flex-1">
+      <div className="w-[250px]">
         <Nav />
       </div>
-      <div className="grow p-5">
-        This is the content
+      <div className="grow p-5 max-w-[900px]">
         <Outlet />
       </div>
     </div>

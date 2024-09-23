@@ -13,7 +13,7 @@ export const NAV_ITEMS = [
     items: [
       {
         title: 'Dashboard',
-        path: '/Dashboard',
+        path: '/',
         icon: <Home />,
         // caption: 'Display only admin role',
       },

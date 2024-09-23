@@ -20,6 +20,8 @@ model User {
   accountId String? @map("account_id")
   account   Account? @relation(fields: [accountId], references: [id], name: "AccountUsers")
 
+  connectedAccounts ConnectedAccount[] @relation("ConnectedAccountsUser")
+
   @@map("users")
 }
 
@@ -30,7 +32,31 @@ model Account {
   updatedAt     DateTime @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  users         User[]   @relation("AccountUsers")
+  users               User[]   @relation("AccountUsers")
+  connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
 
   @@map("accounts")
+}
+
+model ConnectedAccount {
+  id    String @id @default(uuid()) @map("id")
+  accountId     String   @map("account_id")
+  account       Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
+  userId        String   @map("user_id")
+  user               User     @relation(fields: [userId], references: [id], name: "ConnectedAccountsUser")
+  plaidAccountId     String   @map("plaid_account_id")
+  plaidMask          String   @map("plaid_mask")
+  plaidName          String   @map("plaid_name")
+  plaidOfficialName  String   @map("plaid_official_name")
+  plaidPersistId     String   @map("plaid_persist_id")
+  plaidSubtype       String   @map("plaid_subtype")
+  plaidType          String   @map("plaid_type")
+  plaidAccessToken   String   @map("plaid_access_token")
+  plaidInstitutionId String   @map("plaid_institution_id")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@map("connected_accounts")
 }
