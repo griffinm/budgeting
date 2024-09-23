@@ -5,10 +5,19 @@ import {
   Configuration,
   CountryCode,
   Products,
+  Transaction,
+  RemovedTransaction,
 } from "plaid";
 import { ConfigService } from "@nestjs/config";
 import { AccountBase } from "plaid";
-import { format } from "date-fns";
+
+export interface PlaidTransactionsResponse {
+  cursor?: string;
+  has_more: boolean;
+  transactionsAdded: Transaction[];
+  transactionsRemoved: RemovedTransaction[];
+  transactionsModified: Transaction[];
+}
 
 @Injectable()
 export class PlaidService {
@@ -20,6 +29,28 @@ export class PlaidService {
   ) {
     this.logger.log('Initializing Plaid client');
     this.plaidClient = new PlaidApi(this.plaidClientConfiguration());
+  }
+
+  public async syncTransactions(
+    accessToken: string,
+    cursor?: string,
+  ): Promise<PlaidTransactionsResponse> {
+    const transactionsResponse = await this.plaidClient.transactionsSync({
+      access_token: accessToken,
+      cursor: cursor,
+    });
+
+    const transactionsAdded = transactionsResponse.data.added;
+    const transactionsRemoved = transactionsResponse.data.removed;
+    const transactionsModified = transactionsResponse.data.modified;
+
+    return {
+      cursor: transactionsResponse.data.next_cursor,
+      has_more: transactionsResponse.data.has_more,
+      transactionsAdded,
+      transactionsRemoved,
+      transactionsModified,
+    };
   }
 
   public async createLinkToken(userId: string): Promise<string> {
@@ -58,13 +89,8 @@ export class PlaidService {
     institutionId?: string | null;
     accounts: AccountBase[];
   }> {
-    const startDate = new Date();
-    const endDate = new Date();
-    startDate.setDate(startDate.getDate() - 1);
-    const accountsResponse = await this.plaidClient.transactionsGet({
+    const accountsResponse = await this.plaidClient.accountsGet({
       access_token: accessToken,
-      start_date: format(startDate, 'yyyy-MM-dd'),
-      end_date: format(endDate, 'yyyy-MM-dd'),
     });
 
     return {
@@ -78,17 +104,20 @@ export class PlaidService {
     accessToken: string,
   ): Promise<string> {
     this.logger.debug(`Exchanging token for user ${userId.substring(0, 7)}`);
+
     const exchangeResponse = await this.plaidClient.itemPublicTokenExchange({
       public_token: accessToken,
     });
+
     return exchangeResponse.data.access_token;
   }
 
   private plaidClientConfiguration(): Configuration {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
     const basePath = isProduction ? PlaidEnvironments['production'] : PlaidEnvironments['sandbox'];
+    // const basePath = PlaidEnvironments['production'];
     this.logger.log(`Plaid basePath: ${basePath}`);
-    debugger
+
     return new Configuration({
       basePath,
       baseOptions: {

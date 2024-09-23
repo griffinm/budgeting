@@ -5,6 +5,7 @@ import { plainToInstance } from "class-transformer";
 import { Logger } from "@nestjs/common";
 import { ExchangeTokenDto } from "./dto/exchange-token.dto";
 import { PlaidService } from "@budgeting/plaid";
+import { ConnectedAccount } from "@prisma/client";
 
 @Injectable()
 export class ConnectedAccountsService {
@@ -39,13 +40,12 @@ export class ConnectedAccountsService {
     accountData.accounts.forEach(async (account) => {
       const connectedAccount = await this.prisma.connectedAccount.create({
         data: {
+          id: account.account_id,
           userId,
           accountId,
-          plaidAccountId: account.account_id,
           plaidMask: account.mask,
           plaidName: account.name,
           plaidOfficialName: account.official_name,
-          plaidPersistId: account.persistent_account_id,
           plaidSubtype: account.subtype,
           plaidType: account.type,
           plaidAccessToken: privateToken,
@@ -56,5 +56,63 @@ export class ConnectedAccountsService {
     });
 
     return plainToInstance(ConnectedAccountEntity, connectedAccounts);
+  }
+
+  async updateCursor(userId: string, connectedAccountId: string, cursor: string): Promise<ConnectedAccountEntity> {
+    const connectedAccount = await this.prisma.connectedAccount.updateMany({
+      where: { 
+        id: connectedAccountId,
+        deletedAt: null,
+        account: {
+          users: {
+            some: {
+              id: userId,
+            }
+          }
+        }
+      },
+      data: { nextCursor: cursor },
+    });
+    
+    return plainToInstance(ConnectedAccountEntity, connectedAccount);
+  }
+
+  async lastCursor(userId: string,connectedAccountId: string): Promise<string | null> {
+    const connectedAccount = await this.prisma.connectedAccount.findUnique({
+      where: { 
+        id: connectedAccountId,
+        deletedAt: null,
+        account: {
+          users: {
+            some: {
+              id: userId,
+            }
+          }
+        }
+      },
+    });
+    return connectedAccount?.nextCursor || null;
+  }
+
+  async checkIfConnectedAccountBelongsToUser(
+    userId: string,
+    connectedAccountId: string,
+  ): Promise<ConnectedAccount> {
+    this.logger.debug(`Checking if connected account ${connectedAccountId.substring(0, 7)} belongs to user ${userId.substring(0, 7)}`);
+    const connectedAccount = await this.prisma.connectedAccount.findUnique({
+      where: { 
+        id: connectedAccountId,
+        account: {
+          users: {
+            some: {
+              id: userId,
+            }
+          }
+        },
+      },
+    });
+
+    this.logger.debug(`Connected account ${connectedAccountId.substring(0, 7)} belongs to user ${userId.substring(0, 7)}: ${!!connectedAccount}`);
+    return connectedAccount;
   }
 }

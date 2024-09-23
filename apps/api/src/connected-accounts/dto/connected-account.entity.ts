@@ -31,12 +31,7 @@ export class ConnectedAccountEntity {
   @IsDate()
   @IsOptional()
   deletedAt: Date;
-
-  @Expose()
-  @IsString()
-  @IsNotEmpty()
-  plaidAccountId: string;
-
+  
   @Expose()
   @IsString()
   @IsNotEmpty()
@@ -51,10 +46,6 @@ export class ConnectedAccountEntity {
   @IsString()
   @IsNotEmpty()
   plaidOfficialName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  plaidPersistId: string;
 
   @Expose()
   @IsString()

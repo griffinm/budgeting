@@ -34,29 +34,71 @@ model Account {
 
   users               User[]   @relation("AccountUsers")
   connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
-
+  
   @@map("accounts")
 }
 
 model ConnectedAccount {
-  id    String @id @default(uuid()) @map("id")
-  accountId     String   @map("account_id")
-  account       Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
-  userId        String   @map("user_id")
+  id                 String   @id @map("id")
+  accountId          String   @map("account_id")
+  account            Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
+  userId             String   @map("user_id")
   user               User     @relation(fields: [userId], references: [id], name: "ConnectedAccountsUser")
-  plaidAccountId     String   @map("plaid_account_id")
   plaidMask          String   @map("plaid_mask")
   plaidName          String   @map("plaid_name")
   plaidOfficialName  String   @map("plaid_official_name")
-  plaidPersistId     String   @map("plaid_persist_id")
   plaidSubtype       String   @map("plaid_subtype")
   plaidType          String   @map("plaid_type")
   plaidAccessToken   String   @map("plaid_access_token")
   plaidInstitutionId String   @map("plaid_institution_id")
+  nextCursor          String?  @map("next_cursor")
+
+  transactions        AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
   @@map("connected_accounts")
+}
+
+model AccountTransaction {
+  id                    String @id @default(uuid()) @map("id")
+  connectedAccountId    String @map("connected_account_id")
+  connectedAccount      ConnectedAccount @relation(fields: [connectedAccountId], references: [id], name: "AccountTransactionsConnectedAccount")
+  amount                Float
+  name                  String
+  authorizedDate        DateTime?
+  checkNumber           String?
+  currencyCode          String
+  pending               Boolean @default(false) @map("pending")
+  plaidCategoryPrimary  String? @map("plaid_category_primary")
+  plaidCategoryDetail   String? @map("plaid_category_detail")
+  date                  DateTime?
+  merchantId            String?
+  merchant              Merchant? @relation(fields: [merchantId], references: [id], name: "AccountTransactionsMerchant")
+  paymentChannel        String? @map("payment_channel")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("account_transactions")
+}
+
+model Merchant {
+  id          String @id @default(uuid()) @map("id")
+  logoUrl     String? @map("logo_url")
+  name        String? @map("name")
+  marchaneName String? @map("marchane_name")
+  address     String? @map("address")
+  city        String? @map("city")
+  state       String? @map("state")
+  zipCode     String? @map("zip_code")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  AccountTransaction AccountTransaction[] @relation("AccountTransactionsMerchant")
+
+  @@map("merchants")
 }

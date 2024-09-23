@@ -26,9 +26,5 @@ export function PlaidLink({
 
   open();
 
-  return (
-    <div>
-      Plaid Link
-    </div>
-  )
+  return null;
 };

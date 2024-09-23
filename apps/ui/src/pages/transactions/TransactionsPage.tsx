@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet";
+import { TransactionsView } from "@budgeting/ui/views";
 
 export function TransactionsPage() {
 
@@ -8,9 +9,7 @@ export function TransactionsPage() {
         <title>Transactions | Budgeting</title>
       </Helmet>
       
-      <div>
-        <h1>Transactions</h1>
-      </div>
+      <TransactionsView />
     </>
   )
 }

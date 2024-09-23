@@ -22,3 +22,15 @@ export interface JwtPayload {
   accountId: string;
   name: string;
 }
+
+export interface PagedResponse<T> {
+  data: T[];
+  totalRecords: number;
+  currentPage: number;
+  pageSize: number;
+}
+
+export interface PagedRequest {
+  page: number;
+  pageSize: number;
+}

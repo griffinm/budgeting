@@ -6,12 +6,14 @@ import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { TransactionsModule } from '../transactions/transactions.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    TransactionsModule,
     UsersModule,
     PrismaModule,
     AuthModule,
