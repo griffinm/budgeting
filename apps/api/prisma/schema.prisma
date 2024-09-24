@@ -34,16 +34,14 @@ model Account {
 
   users               User[]   @relation("AccountUsers")
   connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
-  
+  accessTokens        AccessToken[] @relation("AccountAccessTokens")
   @@map("accounts")
 }
 
 model ConnectedAccount {
-  id                 String   @id @map("id")
+  id                 String   @id   @map("account_id")
   accountId          String   @map("account_id")
   account            Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
-  userId             String   @map("user_id")
-  user               User     @relation(fields: [userId], references: [id], name: "ConnectedAccountsUser")
   plaidMask          String   @map("plaid_mask")
   plaidName          String   @map("plaid_name")
   plaidOfficialName  String   @map("plaid_official_name")
@@ -51,15 +49,32 @@ model ConnectedAccount {
   plaidType          String   @map("plaid_type")
   plaidAccessToken   String   @map("plaid_access_token")
   plaidInstitutionId String   @map("plaid_institution_id")
-  nextCursor          String?  @map("next_cursor")
+  lastBalance         Float    @map("last_balance")
 
   transactions        AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
+
+  accessTokenId String? @map("access_token_id")
+  accessToken   AccessToken? @relation(fields: [accessTokenId], references: [token], name: "ConnectedAccountsAccessTokens")
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
   @@map("connected_accounts")
+}
+
+model AccessToken {
+  token String @id @map("token")
+  nextCursor String? @map("next_cursor")
+
+  accountId String? @map("account_id")
+  account   Account? @relation(fields: [accountId], references: [id], name: "AccountAccessTokens")
+
+  connectedAccounts ConnectedAccount[] @relation("ConnectedAccountsAccessTokens")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("access_tokens")
 }
 
 model AccountTransaction {

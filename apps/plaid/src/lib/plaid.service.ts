@@ -56,20 +56,6 @@ export class PlaidService {
   public async createLinkToken(userId: string): Promise<string> {
     this.logger.debug(`Creating link token for user ${userId.substring(0, 7)}`);
 
-    this.plaidClient.linkTokenCreate({
-      user: {
-        client_user_id: userId,
-      },
-      client_name: 'Budgeting',
-      language: 'en',
-      country_codes: [CountryCode.Us],
-      products: [Products.Transactions, Products.Auth],
-    }).catch((err) => {
-      debugger
-      this.logger.error(`Error creating link token: ${err}`);
-      throw err;
-  });
-
     const linkToken = await this.plaidClient.linkTokenCreate({
       user: {
         client_user_id: userId,

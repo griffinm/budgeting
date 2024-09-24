@@ -25,6 +25,11 @@ export class AccountTransactionEntity {
   connectedAccountId: string;
 
   @Expose()
+  @IsDate()
+  @IsNotEmpty()
+  date: Date;
+
+  @Expose()
   @IsString()
   @IsNotEmpty()
   amount: string;

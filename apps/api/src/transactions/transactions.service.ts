@@ -60,7 +60,7 @@ export class TransactionsService {
 
     return {
       data: plainToInstance(AccountTransactionEntity, transactions),
-      totalRecords: transactions.length,
+      totalRecords: totalRecords,
       currentPage: page,
       pageSize,
     };
