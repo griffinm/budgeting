@@ -8,12 +8,10 @@ export class ConnectedAccountEntity {
   @IsNotEmpty()
   id: string;
 
-  @Expose()
   @IsString()
   @IsNotEmpty()
   accountId: string;
 
-  @Expose()
   @IsDate()
   @IsNotEmpty()
   createdAt: Date;
@@ -52,7 +50,6 @@ export class ConnectedAccountEntity {
   @IsNotEmpty()
   plaidType: string;
 
-  @Expose()
   @IsString()
   @IsNotEmpty()
   plaidInstitutionId: string;
@@ -61,4 +58,10 @@ export class ConnectedAccountEntity {
   @IsNumber()
   @IsOptional()
   lastBalance?: number;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  nickname?: string;
 }

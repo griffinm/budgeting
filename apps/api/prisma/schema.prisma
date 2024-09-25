@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SyncEventStatus {
+  STARTED
+  COMPLETED
+  FAILED
+}
+
 model User {
   id        String    @id @default(uuid()) @map("id")
   email     String    @unique @map("email")
@@ -33,7 +39,7 @@ model Account {
   users               User[]   @relation("AccountUsers")
   connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
   accessTokens        AccessToken[] @relation("AccountAccessTokens")
-
+  transactions        AccountTransaction[] @relation("AccountTransactionsAccount")
   @@map("accounts")
 }
 
@@ -41,6 +47,7 @@ model ConnectedAccount {
   id                 String   @id   @map("id")
   accountId          String   @map("account_id")
   account            Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
+  nickname           String?  @map("nickname")
 
   // Plaid fields
   plaidMask          String   @map("plaid_mask")
@@ -55,7 +62,7 @@ model ConnectedAccount {
   transactions        AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
 
   accessTokenId String? @map("access_token_id")
-  accessToken   AccessToken? @relation(fields: [accessTokenId], references: [token], name: "ConnectedAccountsAccessTokens")
+  accessToken   AccessToken? @relation(fields: [accessTokenId], references: [id], name: "ConnectedAccountsAccessTokens")
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
@@ -65,23 +72,41 @@ model ConnectedAccount {
 }
 
 model AccessToken {
-  token String @id @map("token")
-  nextCursor String? @map("next_cursor")
+  id                String @id @default(uuid()) @map("id")
+  token             String @unique @map("token")
+  nextCursor        String? @map("next_cursor")
 
-  accountId String? @map("account_id")
-  account   Account? @relation(fields: [accountId], references: [id], name: "AccountAccessTokens")
+  accountId       String? @map("account_id")
+  account         Account? @relation(fields: [accountId], references: [id], name: "AccountAccessTokens")
 
   connectedAccounts ConnectedAccount[] @relation("ConnectedAccountsAccessTokens")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  syncEvents          SyncEvent[] @relation("SyncEventsAccessTokens")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("access_tokens")
+}
+
+model SyncEvent {
+  id                String @id @default(uuid()) @map("id")
+  accessTokenId     String @map("access_token_id")
+  accessToken       AccessToken @relation(fields: [accessTokenId], references: [id], name: "SyncEventsAccessTokens")
+  startedAt         DateTime  @default(now()) @map("started_at")
+  endedAt           DateTime? @map("ended_at")
+  status            SyncEventStatus @map("status")
+
+  accountTransactions AccountTransaction[] @relation("AccountTransactionsSyncEvent")
+
+  @@map("sync_events")
 }
 
 model AccountTransaction {
   id                    String @id @default(uuid()) @map("id")
   connectedAccountId    String @map("connected_account_id")
   connectedAccount      ConnectedAccount @relation(fields: [connectedAccountId], references: [id], name: "AccountTransactionsConnectedAccount")
+  accountId             String @map("account_id")
+  account               Account @relation(fields: [accountId], references: [id], name: "AccountTransactionsAccount")
   amount                Float
   name                  String
   authorizedDate        DateTime?
@@ -94,6 +119,8 @@ model AccountTransaction {
   merchantId            String?
   merchant              Merchant? @relation(fields: [merchantId], references: [id], name: "AccountTransactionsMerchant")
   paymentChannel        String? @map("payment_channel")
+  syncEventId           String? @map("sync_event_id")
+  syncEvent             SyncEvent? @relation(fields: [syncEventId], references: [id], name: "AccountTransactionsSyncEvent")
 
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")

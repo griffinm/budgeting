@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchConnectedAccounts } from "@budgeting/ui/utils/api/connectedAccountClient";
+import { fetchConnectedAccounts, updateConnectedAccount } from "@budgeting/ui/utils/api/connectedAccountClient";
 import { ConnectedAccountEntity } from "@budgeting/api/connected-accounts/dto/connected-account.entity";
 import { AccountsTable } from "@budgeting/ui/components/AccountsTable";
 import { Typography, Button } from "@mui/material";
@@ -48,7 +48,24 @@ export function AccountsView() {
       })
       .catch((err) => console.error(err));
   }
-
+  
+  const onAccountUpdate = (account: ConnectedAccountEntity) => {
+    updateConnectedAccount({
+      connectedAccountId: account.id,
+      updateConnectedAccountDto: {
+        nickname: account.nickname,
+      },
+    }).then((response) => {
+      // replace the account in the list with the updated account
+      const updatedAccounts = connectedAccounts.map((a) => {
+        if (a.id === account.id) {
+          return response.data;
+        }
+        return a;
+      });
+      setConnectedAccounts(updatedAccounts);
+    });
+  }
   return (
     <div>
       {linkToken && <PlaidLink token={linkToken} onGetPublicToken={handleGetPublicToken} />}
@@ -64,7 +81,7 @@ export function AccountsView() {
         </Button>
       </div>
 
-      <AccountsTable connectedAccounts={connectedAccounts} />
+      <AccountsTable connectedAccounts={connectedAccounts} onAccountUpdate={onAccountUpdate} />
     </div>
   )
 }

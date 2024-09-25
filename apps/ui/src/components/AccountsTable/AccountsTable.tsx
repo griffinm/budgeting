@@ -9,13 +9,19 @@ import {
   Typography
 } from "@mui/material";
 import { format as formatDate } from "date-fns";
+import { AccountTableRow } from "./Row";
+import { updateConnectedAccount } from "@budgeting/ui/utils/api";
+
 interface Props {
   connectedAccounts: ConnectedAccountEntity[];
+  onAccountUpdate: (account: ConnectedAccountEntity) => void;
 }
 
 export const AccountsTable = ({ 
   connectedAccounts,
+  onAccountUpdate,
 }: Props) => {
+
   return (
     <>
       <Card >
@@ -30,25 +36,11 @@ export const AccountsTable = ({
           </TableHead>
           <TableBody>
             {connectedAccounts.map((account) => (
-              <TableRow key={account.id}>
-                <TableCell>
-                  <div className="flex flex-col">
-                    {account.plaidOfficialName}
-                    <Typography variant="caption">
-                      {account.plaidSubtype}
-                    </Typography>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  ****{account.plaidMask}
-                </TableCell>
-                <TableCell>
-                  {formatDate(new Date(account.updatedAt), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell>
-                  $0.00
-                </TableCell>
-              </TableRow>
+              <AccountTableRow
+                key={account.id}
+                connectedAccount={account}
+                onUpdate={onAccountUpdate}
+              />
             ))}
           </TableBody>
           {connectedAccounts.length === 0 && (

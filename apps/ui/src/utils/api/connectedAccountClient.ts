@@ -13,3 +13,13 @@ export async function exchangeTokenAndCreateAccounts(
 ): Promise<AxiosResponse<ConnectedAccountEntity[]>> {
   return baseClient.post<ConnectedAccountEntity[]>(baseUrl, { accessToken });
 }
+
+export async function updateConnectedAccount({
+  connectedAccountId,
+  updateConnectedAccountDto,
+}: {
+  connectedAccountId: string;
+  updateConnectedAccountDto: Partial<ConnectedAccountEntity>;
+}): Promise<AxiosResponse<ConnectedAccountEntity>> {
+  return baseClient.patch<ConnectedAccountEntity>(`${baseUrl}/${connectedAccountId}`, updateConnectedAccountDto);
+}

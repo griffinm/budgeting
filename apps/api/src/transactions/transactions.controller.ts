@@ -4,45 +4,48 @@ import {
   Get, 
   UseGuards, 
   Req, 
-  Body, 
   Param,
   Query
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { AuthGuard } from "@budgeting/api/auth";
-import { PagedResponse, RequestWithUser } from "@budgeting/types";
-import { ConnectedAccountsService } from "@budgeting/api/connected-accounts";
+import { PagedRequest, PagedResponse, RequestWithUser } from "@budgeting/types";
 import { AccountTransactionEntity } from "./dto/transaction.entity";
+import { plainToInstance } from "class-transformer";
 
-@Controller()
+@Controller('transactions')
 @UseGuards(AuthGuard)
 export class TransactionsController {
   constructor(
     private readonly transactionsService: TransactionsService,
-    private readonly connectedAccountsService: ConnectedAccountsService,
   ) {}
 
-  @Post('accounts/:accountId/transactions/sync')
-  async syncTransactions(
+  @Get()
+  async findAllForAccount(
     @Req() req: RequestWithUser,
-    @Param('accountId') connectedAccountId: string,
-  ): Promise<void> {
-    const currentCursor = await this.connectedAccountsService.lastCursor(req.user.id, connectedAccountId);
-    await this.transactionsService.syncTransactions(req.user.id, connectedAccountId, currentCursor);
+    @Query() pageRequest: PagedRequest,
+  ): Promise<PagedResponse<AccountTransactionEntity>> {
+    const transactions = await this.transactionsService.findAllForAccount({ 
+      accountId: req.user.accountId, 
+      page: pageRequest.page, 
+      pageSize: pageRequest.pageSize 
+    });
+
+    const transactionsEntites = plainToInstance(AccountTransactionEntity, transactions.data);
+
+    return {
+      data: transactionsEntites,
+      totalRecords: transactions.totalRecords,
+      currentPage: transactions.currentPage,
+      pageSize: transactions.pageSize,
+    };
   }
 
-  @Get('transactions')
-  async getTransactions(
+  @Post('/sync')
+  async syncTransactions(
     @Req() req: RequestWithUser,
-    @Query('accountId') connectedAccountId: string,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 50,
-  ): Promise<PagedResponse<AccountTransactionEntity>> {
-    return await this.transactionsService.getTransactions({
-      userId: req.user.id,
-      connectedAccountId,
-      page,
-      pageSize,
-    });
+  ): Promise<{ success: boolean }> {
+    await this.transactionsService.syncTransactions({ accountId: req.user.accountId });
+    return { success: true };
   }
 }

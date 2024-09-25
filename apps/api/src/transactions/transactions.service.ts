@@ -1,13 +1,9 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaidService } from "@budgeting/plaid";
-import { ConnectedAccountsService } from "../connected-accounts/connected-accounts.service";
 import { PlaidTransactionsResponse } from "@budgeting/plaid";
-import { ConnectedAccountEntity } from "../connected-accounts/dto/connected-account.entity";
-import { ConnectedAccount } from "@prisma/client";
+import { AccessToken, AccountTransaction, SyncEvent, SyncEventStatus } from "@prisma/client";
 import { PagedResponse } from "@budgeting/types";
-import { AccountTransactionEntity } from "./dto/transaction.entity";
-import { plainToInstance } from "class-transformer";
 
 @Injectable()
 export class TransactionsService {
@@ -16,93 +12,121 @@ export class TransactionsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly plaidService: PlaidService,
-    private readonly connectedAccountsService: ConnectedAccountsService,
   ) {}
 
-  public async getTransactions({
-    userId,
-    page,
-    pageSize,
-    connectedAccountId,
+  public async findAllForAccount({
+    accountId,
+    page = 1,
+    pageSize = 10,
   }: {
-    userId: string;
+    accountId: string;
     page: number;
     pageSize: number;
-    connectedAccountId?: string;
-  }): Promise<PagedResponse<AccountTransactionEntity>> {
-    this.logger.log(`Getting transactions for user ${userId.toString()}`);
-
-    const baseQuery = {
-      connectedAccountId,
-      connectedAccount: {
-        account: {
-          users: {
-            some: {
-              id: userId,
-            },
-          },
-        },
-      },
-    }
+  }): Promise<PagedResponse<AccountTransaction>> {
+    this.logger.debug(`Finding all transactions for account ${accountId.substring(0, 7)}`);
 
     const transactions = await this.prismaService.accountTransaction.findMany({
-      where: baseQuery,
-      orderBy: {
-        date: 'desc',
+      where: { accountId },
+      include: {
+        connectedAccount: true,
       },
       skip: (page - 1) * pageSize,
-      take: pageSize,
+      take: parseInt(pageSize.toString()),
     });
 
     const totalRecords = await this.prismaService.accountTransaction.count({
-      where: baseQuery,
+      where: { accountId },
     });
 
     return {
-      data: plainToInstance(AccountTransactionEntity, transactions),
-      totalRecords: totalRecords,
+      data: transactions,
+      totalRecords,
       currentPage: page,
       pageSize,
     };
   }
 
-  public async syncTransactions(
-    userId: string,
-    connectedAccountId: string,
-    cursor?: string,
-  ): Promise<void> {
-    this.logger.log(`Syncing transactions for user ${userId}`);
+  public async syncTransactions({
+    accountId
+  }: {
+    accountId: string;
+  }): Promise<void> {
+    this.logger.log(`Syncing transactions for user ${accountId.substring(0, 7)}`);
 
-    const connectedAccount = 
-      await this.connectedAccountsService.checkIfConnectedAccountBelongsToUser(userId, connectedAccountId);
-    if (!connectedAccount) {
-      throw new NotFoundException(`Connected account ${connectedAccountId} does not belong to user ${userId}`);
+    // Find all of the auth tokens for this account
+    // More than one account can share the same token and using one token will return
+    // transaction info for all of the accounts associated with that token
+    const accessTokens = await this.prismaService.accessToken.findMany({
+      where: {
+        accountId,
+      },
+    });
+
+    for (const accessToken of accessTokens) {
+      // Create a new sync event
+      const syncEvent = await this.prismaService.syncEvent.create({
+        data: {
+          accessTokenId: accessToken.id,
+          status: SyncEventStatus.STARTED,
+        },
+      });
+
+      await this.updateTransactions({
+        accessToken,
+        syncEvent,
+        accountId,
+      });
     }
-
-    await this.updateTransactions(userId, connectedAccount, cursor);
   }
 
-  private async updateTransactions(
-    userId: string,
-    connectedAccount: ConnectedAccount,
-    cursor?: string,
-  ) {
+  private async updateTransactions({
+    accessToken,  
+    syncEvent,
+    accountId,
+  }: {
+    accessToken: AccessToken,
+    syncEvent: SyncEvent,
+    accountId: string,
+  }): Promise<void> {
     // Fetch the new transactions
-    const plaidTransactions: PlaidTransactionsResponse = await this.plaidService.syncTransactions(
-      connectedAccount.plaidAccessToken,
-      cursor,
-    );
+    const plaidTransactions: PlaidTransactionsResponse = await this.plaidService.fetchTransactions({
+      accessToken: accessToken.token,
+      cursor: accessToken.nextCursor,
+    });
+    
+    // Save the cursor
+    const newAccessToken = await this.prismaService.accessToken.update({
+      where: { id: accessToken.id },
+      data: { nextCursor: plaidTransactions.cursor },
+    });
 
-    await this.handleAccountUpdates(plaidTransactions);
+    await this.handleAccountUpdates({ plaidTransactions, syncEvent, accountId });
+    
     
     if (plaidTransactions.has_more) {
-      // Save the cursor
-      await this.connectedAccountsService.updateCursor(userId, connectedAccount.plaidAccessToken, plaidTransactions.cursor);
-      await this.updateTransactions(userId, connectedAccount, plaidTransactions.cursor);
+      // There are more transactions to fetch, so recursively call this function
+      await this.updateTransactions({ accessToken: newAccessToken, syncEvent, accountId });
+    } else {
+      // There are no more transactions to fetch, so update the sync event status
+      await this.prismaService.syncEvent.update({
+        where: { id: syncEvent.id },
+        data: { 
+          status: SyncEventStatus.COMPLETED,
+          endedAt: new Date(),
+        },
+      });
     }
   }
 
-  private async handleAccountUpdates(plaidTransactions: PlaidTransactionsResponse) {
+  private async handleAccountUpdates({
+    plaidTransactions,
+    syncEvent,
+    accountId,
+  }: {
+    plaidTransactions: PlaidTransactionsResponse,
+    syncEvent: SyncEvent,
+    accountId: string,
+  }) {
     const totalTransactions = 
       plaidTransactions.transactionsAdded.length + 
       plaidTransactions.transactionsModified.length + 
@@ -114,6 +138,7 @@ export class TransactionsService {
     await this.prismaService.accountTransaction.createMany({
       data: plaidTransactions.transactionsAdded.map((transaction) => ({
         id: transaction.transaction_id,
+        accountId,
         connectedAccountId: transaction.account_id,
         amount: transaction.amount,
         name: transaction.name,
@@ -125,6 +150,7 @@ export class TransactionsService {
         pending: transaction.pending,
         plaidCategoryPrimary: transaction.personal_finance_category.primary,
         plaidCategoryDetail: transaction.personal_finance_category.detailed,
+        syncEventId: syncEvent.id,
       })),
     });
 
@@ -145,6 +171,7 @@ export class TransactionsService {
           authorizedDate: new Date(transaction.authorized_date),
           checkNumber: transaction.check_number,
           currencyCode: transaction.iso_currency_code,
+          syncEventId: syncEvent.id,
         },
       });
     }

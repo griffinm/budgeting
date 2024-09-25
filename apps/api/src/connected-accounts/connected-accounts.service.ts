@@ -6,6 +6,7 @@ import { Logger } from "@nestjs/common";
 import { ExchangeTokenDto } from "./dto/exchange-token.dto";
 import { PlaidService } from "@budgeting/plaid";
 import { ConnectedAccount } from "@prisma/client";
+import { UpdateConnectedAccountDto } from "./dto/update.dto";
 
 @Injectable()
 export class ConnectedAccountsService {
@@ -16,23 +17,69 @@ export class ConnectedAccountsService {
     private readonly plaidService: PlaidService,
   ) {}
 
-  async findAll(userId: string): Promise<ConnectedAccountEntity[]> {
-    this.logger.debug(`Finding all connected accounts for user ${userId.substring(0, 7)}`);
-    const connectedAccounts = await this.prisma.connectedAccount.findMany({
-      where: { userId, deletedAt: null },
+  async findAllForAccount({
+    accountId
+  }: {
+    accountId: string;
+  }): Promise<ConnectedAccount[]> {
+    return this.prisma.connectedAccount.findMany({
+      where: {
+        accountId,
+        deletedAt: null,
+      },
     });
-    return plainToInstance(ConnectedAccountEntity, connectedAccounts);
   }
 
-  async exchangeTokenAndCreate(
-    userId: string,
-    accountId: string,
-    exchangeTokenDto: ExchangeTokenDto
-  ): Promise<ConnectedAccountEntity[]> {
-    const privateToken = await this.plaidService.exchangeToken(
-      userId,
-      exchangeTokenDto.accessToken,
-    );
+  public async update({
+    accountId,
+    connectedAccountId,
+    updateConnectedAccountDto,
+  }: {
+    accountId: string;
+    connectedAccountId: string;
+    updateConnectedAccountDto: UpdateConnectedAccountDto;
+  }): Promise<ConnectedAccount> {
+    const connectedAccount = await this.prisma.connectedAccount.update({
+      where: { id: connectedAccountId, accountId },
+      data: updateConnectedAccountDto,
+    });
+
+    return connectedAccount;
+  }
+
+  async findAll({
+    accountId,
+  }: {
+    accountId: string;
+  }): Promise<ConnectedAccount[]> {
+    this.logger.debug(`Finding all connected accounts for user ${accountId.substring(0, 7)}`);
+
+    const connectedAccounts = await this.prisma.connectedAccount.findMany({
+      where: { accountId, deletedAt: null },
+    });
+
+    return connectedAccounts;
+  }
+
+  async exchangeTokenAndCreate({
+    accountId,
+    exchangeTokenDto,
+  }: {
+    accountId: string;
+    exchangeTokenDto: ExchangeTokenDto;
+  }): Promise<ConnectedAccount[]> {
+    const privateToken = await this.plaidService.exchangePublicToken({
+      accountId,
+      publicToken: exchangeTokenDto.accessToken,
+    });
+
+    // Save the access token
+    const accessToken = await this.prisma.accessToken.create({
+      data: {
+        token: privateToken,
+        accountId,
+      },
+    });
 
     const accountData = await this.plaidService.getAccounts(privateToken);
     const connectedAccounts: ConnectedAccount[] = [];
@@ -47,6 +94,11 @@ export class ConnectedAccountsService {
           plaidSubtype: account.subtype,
           plaidType: account.type,
           plaidInstitutionId: accountData.institutionId,
+          accessToken: {
+            connect: {
+              id: accessToken.id,
+            }
+          },
           account: {
             connect: {
               id: accountId,
@@ -57,43 +109,7 @@ export class ConnectedAccountsService {
       connectedAccounts.push(connectedAccount);
     };
 
-    return plainToInstance(ConnectedAccountEntity, connectedAccounts);
-  }
-
-  async updateCursor(userId: string, connectedAccountId: string, cursor: string): Promise<ConnectedAccountEntity> {
-    const connectedAccount = await this.prisma.connectedAccount.updateMany({
-      where: { 
-        id: connectedAccountId,
-        deletedAt: null,
-        account: {
-          users: {
-            some: {
-              id: userId,
-            }
-          }
-        }
-      },
-      data: { nextCursor: cursor },
-    });
-    
-    return plainToInstance(ConnectedAccountEntity, connectedAccount);
-  }
-
-  async lastCursor(userId: string,connectedAccountId: string): Promise<string | null> {
-    const connectedAccount = await this.prisma.connectedAccount.findUnique({
-      where: { 
-        id: connectedAccountId,
-        deletedAt: null,
-        account: {
-          users: {
-            some: {
-              id: userId,
-            }
-          }
-        }
-      },
-    });
-    return connectedAccount?.nextCursor || null;
+    return connectedAccounts;
   }
 
   async checkIfConnectedAccountBelongsToUser(

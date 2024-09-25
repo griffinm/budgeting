@@ -1,4 +1,5 @@
-import { Exclude, Expose } from "class-transformer";
+import { ConnectedAccountEntity } from "@budgeting/api/connected-accounts/dto/connected-account.entity";
+import { Exclude, Expose, Type } from "class-transformer";
 import { 
   IsString, 
   IsNotEmpty,
@@ -77,4 +78,8 @@ export class AccountTransactionEntity {
   @IsDate()
   @IsOptional()
   updatedAt: Date;
+
+  @Expose()
+  @Type(() => ConnectedAccountEntity)
+  connectedAccount: ConnectedAccountEntity;
 }

@@ -31,10 +31,13 @@ export class PlaidService {
     this.plaidClient = new PlaidApi(this.plaidClientConfiguration());
   }
 
-  public async syncTransactions(
+  public async fetchTransactions({
+    accessToken,
+    cursor,
+  }: {
     accessToken: string,
     cursor?: string,
-  ): Promise<PlaidTransactionsResponse> {
+  }): Promise<PlaidTransactionsResponse> {
     const transactionsResponse = await this.plaidClient.transactionsSync({
       access_token: accessToken,
       cursor: cursor,
@@ -63,7 +66,7 @@ export class PlaidService {
       client_name: 'Budgeting',
       language: 'en',
       country_codes: [CountryCode.Us],
-      products: [Products.Transactions, Products.Auth],
+      products: [Products.Transactions],
     });
 
     return linkToken.data.link_token;
@@ -85,14 +88,17 @@ export class PlaidService {
     };
   }
 
-  public async exchangeToken(
-    userId: string, 
-    accessToken: string,
-  ): Promise<string> {
-    this.logger.debug(`Exchanging token for user ${userId.substring(0, 7)}`);
+  public async exchangePublicToken({
+    accountId,
+    publicToken,
+  }: {
+    accountId: string;
+    publicToken: string;
+  }): Promise<string> {
+    this.logger.debug(`Exchanging token for account ${accountId.substring(0, 7)}`);
 
     const exchangeResponse = await this.plaidClient.itemPublicTokenExchange({
-      public_token: accessToken,
+      public_token: publicToken,
     });
 
     return exchangeResponse.data.access_token;
