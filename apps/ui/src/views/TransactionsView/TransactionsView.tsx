@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react"
-import { fetchTransactions, syncTransactions } from "@budgeting/ui/utils/api";
+import { fetchTransactions, syncTransactions, updateBalances } from "@budgeting/ui/utils/api";
 import { AccountTransactionEntity } from "@budgeting/api/transactions/dto/transaction.entity";
 import { Button, Typography } from "@mui/material";
 import { TransactionTable } from "@budgeting/ui/components/TransactionTable";
-import { Loading } from "@budgeting/ui/components";
 
 export function TransactionsView() {
   const [transactions, setTransactions] = useState<AccountTransactionEntity[]>([]);
@@ -11,7 +10,8 @@ export function TransactionsView() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
-  
+  const [syncing, setSyncing] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     fetchTransactions({
@@ -22,13 +22,14 @@ export function TransactionsView() {
     }).then((resp) => {
       setTransactions(resp.data.data);
       setTotalRecords(resp.data.totalRecords);
+      updateBalances();
     }).finally(() => {
       setLoading(false);
     });
   }, [page, pageSize]);
 
   const handleSyncTransactions = () => {
-    setLoading(true);
+    setSyncing(true);
     syncTransactions().then(() => {
       fetchTransactions({
         pagedRequest: {
@@ -38,9 +39,10 @@ export function TransactionsView() {
       }).then((resp) => {
         setTransactions(resp.data.data);
         setTotalRecords(resp.data.totalRecords);
+        setPage(1);
       });
     }).finally(() => {
-      setLoading(false);
+      setSyncing(false);
     });
   }
 
@@ -51,24 +53,21 @@ export function TransactionsView() {
         <Button
           variant="contained"
           color="primary"
-          disabled={loading}
+          disabled={syncing}
           onClick={handleSyncTransactions}
         >
-          {loading ? 'Syncing...' : 'Update Now'}
+          {syncing ? 'Syncing...' : 'Update Now'}
         </Button>
       </div>
-
-      {loading && <Loading />}
-      {!loading && (
-        <TransactionTable
-          transactions={transactions}
-          currentPage={page}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          totalRecords={totalRecords}
-        />
-      )}
+      <TransactionTable
+        loading={loading}
+        transactions={transactions}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        totalRecords={totalRecords}
+      />
     </div>
   )
 }

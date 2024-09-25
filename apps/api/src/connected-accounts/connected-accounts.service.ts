@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { ConnectedAccountEntity } from "./dto/connected-account.entity";
 import { PrismaService } from "../prisma/prisma.service";
-import { plainToInstance } from "class-transformer";
 import { Logger } from "@nestjs/common";
 import { ExchangeTokenDto } from "./dto/exchange-token.dto";
 import { PlaidService } from "@budgeting/plaid";
@@ -28,6 +26,33 @@ export class ConnectedAccountsService {
         deletedAt: null,
       },
     });
+  }
+
+  public async updateBalances({ accountId }: { accountId: string }): Promise<void> {
+    // Grab all of the access tokens for the account
+    const accessTokens = await this.prisma.accessToken.findMany({
+      where: { accountId },
+    });
+
+    // Loop through each access tokens
+    for (const accessToken of accessTokens) {
+      // Get all plaid accounts for the access token
+      const plaidAccounts = await this.plaidService.getAccounts(accessToken.token);
+
+      // Loop through each plaid account for the access token
+      for (const plaidAccount of plaidAccounts.accounts) {
+        const connectedAccount = await this.prisma.connectedAccount.findUnique({
+          where: { id: plaidAccount.account_id },
+        });
+      
+        if (connectedAccount) {
+          await this.prisma.connectedAccount.update({
+            where: { id: connectedAccount.id },
+            data: { lastBalance: plaidAccount.balances.current },
+          });
+        }
+      } // END loop of plaid accounts
+    } // END loop of access tokens
   }
 
   public async update({

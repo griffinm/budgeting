@@ -1,6 +1,16 @@
 import { AccountTransactionEntity } from "@budgeting/api/transactions/dto/transaction.entity";
-import { Card, Table, TableCell, TableHead, TableRow, TableBody, TablePagination, TableFooter } from "@mui/material";
-import { format as formatDate } from "date-fns";
+import { 
+  Card, 
+  Table, 
+  TableCell, 
+  TableHead, 
+  TableRow, 
+  TableBody, 
+  TablePagination, 
+  TableFooter, 
+  Typography,
+} from "@mui/material";
+import { TransactionTableRow } from "./TransactionTableRow";
 
 interface Props {
   transactions: AccountTransactionEntity[];
@@ -9,6 +19,7 @@ interface Props {
   pageSize: number;
   onPageSizeChange: (pageSize: number) => void;
   totalRecords: number;
+  loading: boolean;
 }
 
 export function TransactionTable({ 
@@ -18,6 +29,7 @@ export function TransactionTable({
   pageSize,
   onPageSizeChange,
   totalRecords,
+  loading,
 }: Props) {
 
   return (
@@ -26,6 +38,7 @@ export function TransactionTable({
         <TableHead>
           <TableRow>
             <TableCell>Date</TableCell>
+            <TableCell>Account</TableCell>
             <TableCell>Amount</TableCell>
             <TableCell>Merchant</TableCell>
             <TableCell></TableCell>
@@ -34,15 +47,15 @@ export function TransactionTable({
 
         <TableBody>
           {transactions.map((transaction) => (
-            <TableRow key={transaction.id}>
-              <TableCell>{formatDate(transaction.date, "M/dd/yyyy")}</TableCell>
-              <TableCell>
-                ${parseFloat(transaction.amount).toFixed(2)}
-              </TableCell>
-              <TableCell>{transaction.name}</TableCell>
-              <TableCell></TableCell>
-            </TableRow>
+            <TransactionTableRow key={transaction.id} transaction={transaction} />
           ))}
+          {!loading && transactions.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} align="center">
+                <Typography variant="body1">No transactions found</Typography>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
         <TableFooter>
           <TableRow>

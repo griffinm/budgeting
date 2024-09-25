@@ -23,3 +23,7 @@ export async function updateConnectedAccount({
 }): Promise<AxiosResponse<ConnectedAccountEntity>> {
   return baseClient.patch<ConnectedAccountEntity>(`${baseUrl}/${connectedAccountId}`, updateConnectedAccountDto);
 }
+
+export async function updateBalances(): Promise<AxiosResponse<void>> {
+  return baseClient.post<void>(`${baseUrl}/update-balances`);
+}

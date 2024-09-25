@@ -34,6 +34,15 @@ export class ConnectedAccountsController {
     return plainToInstance(ConnectedAccountEntity, accounts);
   }
 
+  @Post('/update-balances')
+  async updateBalances(
+    @Req() req: RequestWithUser,
+  ): Promise<void> {
+    await this.connectedAccountsService.updateBalances({
+      accountId: req.user.accountId,
+    });
+  }
+
   @Patch(':id')
   async update(
     @Req() req: RequestWithUser,

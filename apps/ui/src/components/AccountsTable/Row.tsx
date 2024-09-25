@@ -4,7 +4,7 @@ import { format as formatDate } from "date-fns";
 import { useState } from "react";
 import { TextField, Button } from "@mui/material";
 import { Check, Close } from "@mui/icons-material";
-
+import { formatCurrency } from "@budgeting/ui/utils/formatters";
 interface Props {
   connectedAccount: ConnectedAccountEntity;
   onUpdate: (connectedAccount: ConnectedAccountEntity) => void;
@@ -78,7 +78,7 @@ export function AccountTableRow({ connectedAccount, onUpdate }: Props) {
         {formatDate(new Date(connectedAccount.updatedAt), "MMM d, yyyy")}
       </TableCell>
       <TableCell>
-        $0.00
+        {formatCurrency(connectedAccount.lastBalance)}
       </TableCell>
     </TableRow>
   )
