@@ -35,23 +35,27 @@ export class ConnectedAccountsService {
     );
 
     const accountData = await this.plaidService.getAccounts(privateToken);
-    const connectedAccounts: ConnectedAccountEntity[] = [];
+    const connectedAccounts: ConnectedAccount[] = [];
 
     for (const account of accountData.accounts) {
       const connectedAccount = await this.prisma.connectedAccount.create({
         data: {
           id: account.account_id,
-          userId,
           plaidMask: account.mask,
           plaidName: account.name,
           plaidOfficialName: account.official_name,
           plaidSubtype: account.subtype,
           plaidType: account.type,
           plaidInstitutionId: accountData.institutionId,
+          account: {
+            connect: {
+              id: accountId,
+            }
+          }
         },
       });
       connectedAccounts.push(connectedAccount);
-    });
+    };
 
     return plainToInstance(ConnectedAccountEntity, connectedAccounts);
   }

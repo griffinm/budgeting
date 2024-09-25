@@ -20,8 +20,6 @@ model User {
   accountId String? @map("account_id")
   account   Account? @relation(fields: [accountId], references: [id], name: "AccountUsers")
 
-  connectedAccounts ConnectedAccount[] @relation("ConnectedAccountsUser")
-
   @@map("users")
 }
 
@@ -35,21 +33,24 @@ model Account {
   users               User[]   @relation("AccountUsers")
   connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
   accessTokens        AccessToken[] @relation("AccountAccessTokens")
+
   @@map("accounts")
 }
 
 model ConnectedAccount {
-  id                 String   @id   @map("account_id")
+  id                 String   @id   @map("id")
   accountId          String   @map("account_id")
   account            Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
+
+  // Plaid fields
   plaidMask          String   @map("plaid_mask")
   plaidName          String   @map("plaid_name")
   plaidOfficialName  String   @map("plaid_official_name")
   plaidSubtype       String   @map("plaid_subtype")
   plaidType          String   @map("plaid_type")
-  plaidAccessToken   String   @map("plaid_access_token")
   plaidInstitutionId String   @map("plaid_institution_id")
-  lastBalance         Float    @map("last_balance")
+  lastBalance        Float?    @map("last_balance")
+  // END Plaid fields
 
   transactions        AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
 

@@ -1,5 +1,5 @@
 import { Exclude, Expose } from "class-transformer";
-import { IsString, IsNotEmpty, IsDate, IsOptional } from "class-validator";
+import { IsString, IsNotEmpty, IsDate, IsOptional, IsNumber } from "class-validator";
 
 @Exclude()
 export class ConnectedAccountEntity {
@@ -7,11 +7,6 @@ export class ConnectedAccountEntity {
   @IsString()
   @IsNotEmpty()
   id: string;
-
-  @Expose()
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
 
   @Expose()
   @IsString()
@@ -57,12 +52,13 @@ export class ConnectedAccountEntity {
   @IsNotEmpty()
   plaidType: string;
 
-  @IsString()
-  @IsNotEmpty()
-  plaidAccessToken: string;
-
   @Expose()
   @IsString()
   @IsNotEmpty()
   plaidInstitutionId: string;
+
+  @Expose()
+  @IsNumber()
+  @IsOptional()
+  lastBalance?: number;
 }
