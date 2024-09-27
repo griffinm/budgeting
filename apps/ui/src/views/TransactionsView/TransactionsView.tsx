@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react"
-import { fetchTransactions, syncTransactions, updateBalances } from "@budgeting/ui/utils/api";
+import { useEffect, useMemo, useState } from "react"
+import { fetchTransactions, syncTransactions } from "@budgeting/ui/utils/api";
 import { AccountTransactionEntity } from "@budgeting/api/transactions/dto/transaction.entity";
 import { Button, Typography } from "@mui/material";
 import { TransactionTable } from "@budgeting/ui/components/TransactionTable";
+import { AccountSelect } from "@budgeting/ui/components/AccountSelect";
+
+interface TransactionFilter {
+  connectedAccountId?: string;
+}
 
 export function TransactionsView() {
   const [transactions, setTransactions] = useState<AccountTransactionEntity[]>([]);
@@ -11,7 +16,17 @@ export function TransactionsView() {
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [accountFilter, setAccountFilter] = useState<string>("");
 
+  const filter = useMemo(() => {
+    const f: TransactionFilter = {};
+    if (accountFilter) {
+      f.connectedAccountId = accountFilter;
+    }
+    return f;
+  }, [accountFilter]);
+
+  // Load the transactions when paging info changes
   useEffect(() => {
     setLoading(true);
     fetchTransactions({
@@ -19,14 +34,14 @@ export function TransactionsView() {
         page,
         pageSize,
       },
+      filter,
     }).then((resp) => {
       setTransactions(resp.data.data);
       setTotalRecords(resp.data.totalRecords);
-      updateBalances();
     }).finally(() => {
       setLoading(false);
     });
-  }, [page, pageSize]);
+  }, [page, pageSize, accountFilter]);
 
   const handleSyncTransactions = () => {
     setSyncing(true);
@@ -36,6 +51,7 @@ export function TransactionsView() {
           page: 1,
           pageSize,
         },
+        filter,
       }).then((resp) => {
         setTransactions(resp.data.data);
         setTotalRecords(resp.data.totalRecords);
@@ -59,6 +75,15 @@ export function TransactionsView() {
           {syncing ? 'Syncing...' : 'Update Now'}
         </Button>
       </div>
+
+      <div className="grid grid-cols-3 gap-4 pb-7">
+        <AccountSelect
+          selectedAccountId={accountFilter}
+          onChange={setAccountFilter}
+          label="Filter by Account"
+        />
+      </div>
+
       <TransactionTable
         loading={loading}
         transactions={transactions}

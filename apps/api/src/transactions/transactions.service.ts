@@ -4,6 +4,7 @@ import { PlaidService } from "@budgeting/plaid";
 import { PlaidTransactionsResponse } from "@budgeting/plaid";
 import { AccessToken, AccountTransaction, SyncEvent, SyncEventStatus } from "@prisma/client";
 import { PagedResponse } from "@budgeting/types";
+import { TransactionFilter } from "./dto/transaction-filter";
 
 @Injectable()
 export class TransactionsService {
@@ -18,24 +19,36 @@ export class TransactionsService {
     accountId,
     page = 1,
     pageSize = 10,
+    filter,
   }: {
     accountId: string;
     page: number;
     pageSize: number;
+    filter: TransactionFilter;
   }): Promise<PagedResponse<AccountTransaction>> {
     this.logger.debug(`Finding all transactions for account ${accountId.substring(0, 7)}`);
 
     const transactions = await this.prismaService.accountTransaction.findMany({
-      where: { accountId },
+      where: { 
+        accountId,
+        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
+      },
       include: {
         connectedAccount: true,
       },
       skip: (page - 1) * pageSize,
       take: parseInt(pageSize.toString()),
+      orderBy: {
+        date: "desc",
+      },
     });
 
     const totalRecords = await this.prismaService.accountTransaction.count({
-      where: { accountId },
+      where: { 
+        accountId,
+        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
+      },
+
     });
 
     return {
@@ -135,6 +148,7 @@ export class TransactionsService {
 
     // Create new transactions
     this.logger.debug(`Creating ${plaidTransactions.transactionsAdded.length} new transactions`);
+
     await this.prismaService.accountTransaction.createMany({
       data: plaidTransactions.transactionsAdded.map((transaction) => ({
         id: transaction.transaction_id,

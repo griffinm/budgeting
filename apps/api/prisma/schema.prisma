@@ -50,12 +50,12 @@ model ConnectedAccount {
   nickname           String?  @map("nickname")
 
   // Plaid fields
-  plaidMask          String   @map("plaid_mask")
-  plaidName          String   @map("plaid_name")
-  plaidOfficialName  String   @map("plaid_official_name")
-  plaidSubtype       String   @map("plaid_subtype")
-  plaidType          String   @map("plaid_type")
-  plaidInstitutionId String   @map("plaid_institution_id")
+  plaidMask          String?   @map("plaid_mask")
+  plaidName          String?   @map("plaid_name")
+  plaidOfficialName  String?   @map("plaid_official_name")
+  plaidSubtype       String?   @map("plaid_subtype")
+  plaidType          String?   @map("plaid_type")
+  plaidInstitutionId String?   @map("plaid_institution_id")
   lastBalance        Float?    @map("last_balance")
   // END Plaid fields
 

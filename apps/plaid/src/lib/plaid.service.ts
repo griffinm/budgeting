@@ -105,17 +105,19 @@ export class PlaidService {
   }
 
   private plaidClientConfiguration(): Configuration {
-    const isProduction = this.configService.get('NODE_ENV') === 'production';
+    const isProduction = this.configService.get('PLAID_ENV') === 'production';
+    const secret = isProduction ? this.configService.get('PLAID_SECRET_PRODUCTION') : this.configService.get('PLAID_SECRET_SANDBOX');
+    const clientId = this.configService.get('PLAID_CLIENT_ID');
     const basePath = isProduction ? PlaidEnvironments['production'] : PlaidEnvironments['sandbox'];
-    // const basePath = PlaidEnvironments['production'];
+
     this.logger.log(`Plaid basePath: ${basePath}`);
 
     return new Configuration({
       basePath,
       baseOptions: {
         headers: {
-          'PLAID-CLIENT-ID': this.configService.get('PLAID_CLIENT_ID'),
-          'PLAID-SECRET': this.configService.get('PLAID_SECRET'),
+          'PLAID-CLIENT-ID': clientId,
+          'PLAID-SECRET': secret,
         },
       },
     });

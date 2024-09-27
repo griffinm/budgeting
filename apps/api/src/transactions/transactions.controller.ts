@@ -12,6 +12,7 @@ import { AuthGuard } from "@budgeting/api/auth";
 import { PagedRequest, PagedResponse, RequestWithUser } from "@budgeting/types";
 import { AccountTransactionEntity } from "./dto/transaction.entity";
 import { plainToInstance } from "class-transformer";
+import { TransactionFilter } from "./dto/transaction-filter";
 
 @Controller('transactions')
 @UseGuards(AuthGuard)
@@ -24,11 +25,13 @@ export class TransactionsController {
   async findAllForAccount(
     @Req() req: RequestWithUser,
     @Query() pageRequest: PagedRequest,
+    @Query() filter: TransactionFilter,
   ): Promise<PagedResponse<AccountTransactionEntity>> {
     const transactions = await this.transactionsService.findAllForAccount({ 
       accountId: req.user.accountId, 
       page: pageRequest.page, 
-      pageSize: pageRequest.pageSize 
+      pageSize: pageRequest.pageSize,
+      filter,
     });
 
     const transactionsEntites = plainToInstance(AccountTransactionEntity, transactions.data);
