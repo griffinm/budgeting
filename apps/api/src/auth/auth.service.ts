@@ -30,8 +30,8 @@ export class AuthService {
     };
 
     const token = jwt.sign({
-      // This sets the expiration to 1 day from now
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24),
+      // This sets the expiration to 1 month from now
+      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30),
       ...payload,
     }, process.env.JWT_TOKEN_SECRET);
 

@@ -1,16 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum SyncEventStatus {
-  STARTED
-  COMPLETED
-  FAILED
 }
 
 model User {
@@ -19,129 +14,130 @@ model User {
   password  String    @map("password")
   name      String    @map("name")
   deletedAt DateTime? @map("deleted_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  accountId String? @map("account_id")
-  account   Account? @relation(fields: [accountId], references: [id], name: "AccountUsers")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  accountId String?   @map("account_id")
+  account   Account?  @relation("AccountUsers", fields: [accountId], references: [id])
 
   @@map("users")
 }
 
 model Account {
-  id    String @id @default(uuid()) @map("id")
+  id                String               @id @default(uuid()) @map("id")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  deletedAt         DateTime?            @map("deleted_at")
+  accessTokens      AccessToken[]        @relation("AccountAccessTokens")
+  transactions      AccountTransaction[] @relation("AccountTransactionsAccount")
+  connectedAccounts ConnectedAccount[]   @relation("ConnectedAccountsAccount")
+  users             User[]               @relation("AccountUsers")
 
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
-
-  users               User[]   @relation("AccountUsers")
-  connectedAccounts   ConnectedAccount[] @relation("ConnectedAccountsAccount")
-  accessTokens        AccessToken[] @relation("AccountAccessTokens")
-  transactions        AccountTransaction[] @relation("AccountTransactionsAccount")
   @@map("accounts")
 }
 
 model ConnectedAccount {
-  id                 String   @id   @map("id")
-  accountId          String   @map("account_id")
-  account            Account  @relation(fields: [accountId], references: [id], name: "ConnectedAccountsAccount")
-  nickname           String?  @map("nickname")
-
-  // Plaid fields
-  plaidMask          String?   @map("plaid_mask")
-  plaidName          String?   @map("plaid_name")
-  plaidOfficialName  String?   @map("plaid_official_name")
-  plaidSubtype       String?   @map("plaid_subtype")
-  plaidType          String?   @map("plaid_type")
-  plaidInstitutionId String?   @map("plaid_institution_id")
-  lastBalance        Float?    @map("last_balance")
-  // END Plaid fields
-
-  transactions        AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
-
-  accessTokenId String? @map("access_token_id")
-  accessToken   AccessToken? @relation(fields: [accessTokenId], references: [id], name: "ConnectedAccountsAccessTokens")
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  deletedAt     DateTime? @map("deleted_at")
-
+  id                 String               @id @map("id")
+  accountId          String               @map("account_id")
+  plaidMask          String?              @map("plaid_mask")
+  plaidName          String?              @map("plaid_name")
+  plaidOfficialName  String?              @map("plaid_official_name")
+  plaidSubtype       String?              @map("plaid_subtype")
+  plaidType          String?              @map("plaid_type")
+  plaidInstitutionId String?              @map("plaid_institution_id")
+  lastBalance        Float?               @map("last_balance")
+  accessTokenId      String?              @map("access_token_id")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  deletedAt          DateTime?            @map("deleted_at")
+  nickname           String?              @map("nickname")
+  transactions       AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
+  accessToken        AccessToken?         @relation("ConnectedAccountsAccessTokens", fields: [accessTokenId], references: [id])
+  account            Account              @relation("ConnectedAccountsAccount", fields: [accountId], references: [id])
+  dailyBalances      DailyBalance[]       @relation("DailyBalancesConnectedAccount")
   @@map("connected_accounts")
 }
 
 model AccessToken {
-  id                String @id @default(uuid()) @map("id")
-  token             String @unique @map("token")
-  nextCursor        String? @map("next_cursor")
-
-  accountId       String? @map("account_id")
-  account         Account? @relation(fields: [accountId], references: [id], name: "AccountAccessTokens")
-
+  id                String             @id @default(uuid()) @map("id")
+  token             String             @unique @map("token")
+  nextCursor        String?            @map("next_cursor")
+  accountId         String?            @map("account_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  account           Account?           @relation("AccountAccessTokens", fields: [accountId], references: [id])
   connectedAccounts ConnectedAccount[] @relation("ConnectedAccountsAccessTokens")
-  syncEvents          SyncEvent[] @relation("SyncEventsAccessTokens")
-
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  syncEvents        SyncEvent[]        @relation("SyncEventsAccessTokens")
 
   @@map("access_tokens")
 }
 
 model SyncEvent {
-  id                String @id @default(uuid()) @map("id")
-  accessTokenId     String @map("access_token_id")
-  accessToken       AccessToken @relation(fields: [accessTokenId], references: [id], name: "SyncEventsAccessTokens")
-  startedAt         DateTime  @default(now()) @map("started_at")
-  endedAt           DateTime? @map("ended_at")
-  status            SyncEventStatus @map("status")
-
+  id                  String               @id @default(uuid()) @map("id")
+  accessTokenId       String               @map("access_token_id")
+  startedAt           DateTime             @default(now()) @map("started_at")
+  endedAt             DateTime?            @map("ended_at")
+  status              SyncEventStatus      @map("status")
   accountTransactions AccountTransaction[] @relation("AccountTransactionsSyncEvent")
+  accessToken         AccessToken          @relation("SyncEventsAccessTokens", fields: [accessTokenId], references: [id])
 
   @@map("sync_events")
 }
 
 model AccountTransaction {
-  id                    String @id @default(uuid()) @map("id")
-  connectedAccountId    String @map("connected_account_id")
-  connectedAccount      ConnectedAccount @relation(fields: [connectedAccountId], references: [id], name: "AccountTransactionsConnectedAccount")
-  accountId             String @map("account_id")
-  account               Account @relation(fields: [accountId], references: [id], name: "AccountTransactionsAccount")
-  amount                Float
-  name                  String
-  authorizedDate        DateTime?
-  checkNumber           String?
-  currencyCode          String
-  pending               Boolean @default(false) @map("pending")
-  plaidCategoryPrimary  String? @map("plaid_category_primary")
-  plaidCategoryDetail   String? @map("plaid_category_detail")
-  date                  DateTime?
-  merchantId            String?
-  merchant              Merchant? @relation(fields: [merchantId], references: [id], name: "AccountTransactionsMerchant")
-  paymentChannel        String? @map("payment_channel")
-  syncEventId           String? @map("sync_event_id")
-  syncEvent             SyncEvent? @relation(fields: [syncEventId], references: [id], name: "AccountTransactionsSyncEvent")
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                   String           @id @default(uuid()) @map("id")
+  connectedAccountId   String           @map("connected_account_id")
+  accountId            String           @map("account_id")
+  amount               Float
+  name                 String
+  authorizedDate       DateTime?
+  checkNumber          String?
+  currencyCode         String
+  pending              Boolean          @default(false) @map("pending")
+  plaidCategoryPrimary String?          @map("plaid_category_primary")
+  plaidCategoryDetail  String?          @map("plaid_category_detail")
+  date                 DateTime?
+  merchantId           String?
+  paymentChannel       String?          @map("payment_channel")
+  syncEventId          String?          @map("sync_event_id")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  account              Account          @relation("AccountTransactionsAccount", fields: [accountId], references: [id])
+  connectedAccount     ConnectedAccount @relation("AccountTransactionsConnectedAccount", fields: [connectedAccountId], references: [id])
+  merchant             Merchant?        @relation("AccountTransactionsMerchant", fields: [merchantId], references: [id])
+  syncEvent            SyncEvent?       @relation("AccountTransactionsSyncEvent", fields: [syncEventId], references: [id])
 
   @@map("account_transactions")
 }
 
 model Merchant {
-  id          String @id @default(uuid()) @map("id")
-  logoUrl     String? @map("logo_url")
-  name        String? @map("name")
-  marchaneName String? @map("marchane_name")
-  address     String? @map("address")
-  city        String? @map("city")
-  state       String? @map("state")
-  zipCode     String? @map("zip_code")
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
+  id                 String               @id @default(uuid()) @map("id")
+  logoUrl            String?              @map("logo_url")
+  name               String?              @map("name")
+  merchantName       String?              @map("merchant_name")
+  address            String?              @map("address")
+  city               String?              @map("city")
+  state              String?              @map("state")
+  zipCode            String?              @map("zip_code")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
   AccountTransaction AccountTransaction[] @relation("AccountTransactionsMerchant")
 
   @@map("merchants")
+}
+
+view DailyBalance {
+  connectedAccountId    String      @map("connected_account_id")
+  date                  DateTime    @map("date")
+  runningBalance        Float     @map("running_balance")
+
+  ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
+
+  @@id([connectedAccountId, date])
+  @@map("daily_balance")
+}
+
+enum SyncEventStatus {
+  STARTED
+  COMPLETED
+  FAILED
 }

@@ -1,5 +1,10 @@
 import { User } from "@prisma/client";
 
+export interface DailySpend {
+  date: Date;
+  spend: number;
+}
+
 export interface RequestWithUser extends Request {
   user: User;
 }
