@@ -20,7 +20,6 @@ export interface GroupedMonthlyTotal extends MonthAndYear {
   }[];
 }
 
-
 export async function fetchData(): Promise<GroupedMonthlyTotal[]> {
   const months = getMonthAndYearSet();
 
@@ -103,4 +102,40 @@ export const getMonthAndYearSet = (): MonthAndYear[] => {
   }
 
   return [month1, month2, month3];
+}
+
+export const chartIncomeSeries = (data: GroupedMonthlyTotal[]) => {
+  return data.map((total) => {
+    return {
+      x: `${total.month}/${total.year}`,
+      y: Math.abs(total.totals.find((t) => t.type === 'income')?.amount ?? 0),
+    }
+  })
+}
+
+export const chartExpenseSeries = (data: GroupedMonthlyTotal[]) => {
+  return data.map((total) => {
+    return {
+      x: `${total.month}/${total.year}`,
+      y: Math.abs(total.totals.find((t) => t.type === 'expenses')?.amount ?? 0),
+    }
+  })
+}
+
+export const get3MonthChange = (data: GroupedMonthlyTotal[]) => {
+  const allExpensesRecords = data.map((total) => total.totals.find((t) => t.type === 'expenses')?.amount ?? 0);
+  const allIncomeRecords = data.map((total) => total.totals.find((t) => t.type === 'income')?.amount ?? 0);
+
+  const expenseTotal = allExpensesRecords.reduce((acc, curr) => acc + curr, 0);
+  const incomeTotal = allIncomeRecords.reduce((acc, curr) => acc + curr, 0);
+
+  const change = Math.abs(incomeTotal) - expenseTotal
+
+  return change;
+} 
+
+export function getNetForMonth(month: GroupedMonthlyTotal): number {
+  const income = month.totals.find((t) => t.type === 'income')?.amount ?? 0;
+  const expenses = month.totals.find((t) => t.type === 'expenses')?.amount ?? 0;
+  return Math.abs(income) - expenses;
 }

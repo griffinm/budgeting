@@ -88,7 +88,7 @@ export function MonthComparison() {
             yaxis: {
               labels: {
                 show: true,
-                formatter: (value) => `$${(value / 1000).toFixed(0)}k`,
+                formatter: (value: number) => `$${(value / 1000).toFixed(0)}k`,
               },
             },
             xaxis: {

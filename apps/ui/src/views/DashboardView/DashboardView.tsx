@@ -10,7 +10,7 @@ export function DashboardView() {
       <div className="col-span-2">
         <MonthComparison />
       </div>
-      <div>
+      <div className="col-span-2">
         <ProfitAndLoss />
       </div>
     </div>
