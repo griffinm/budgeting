@@ -53,7 +53,7 @@ model ConnectedAccount {
   transactions       AccountTransaction[] @relation("AccountTransactionsConnectedAccount")
   accessToken        AccessToken?         @relation("ConnectedAccountsAccessTokens", fields: [accessTokenId], references: [id])
   account            Account              @relation("ConnectedAccountsAccount", fields: [accountId], references: [id])
-  dailyBalances      DailyBalance[]       @relation("DailyBalancesConnectedAccount")
+  // dailyBalances      DailyBalance[]       @relation("DailyBalancesConnectedAccount")
   @@map("connected_accounts")
 }
 
@@ -125,16 +125,16 @@ model Merchant {
   @@map("merchants")
 }
 
-view DailyBalance {
-  connectedAccountId    String      @map("connected_account_id")
-  date                  DateTime    @map("date")
-  runningBalance        Float     @map("running_balance")
+// view DailyBalance {
+//   connectedAccountId    String      @map("connected_account_id")
+//   date                  DateTime    @map("date")
+//   runningBalance        Float     @map("running_balance")
 
-  ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
+//   ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
 
-  @@id([connectedAccountId, date])
-  @@map("daily_balance")
-}
+//   @@id([connectedAccountId, date])
+//   @@map("daily_balance")
+// }
 
 enum SyncEventStatus {
   STARTED
