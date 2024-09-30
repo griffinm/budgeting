@@ -72,6 +72,7 @@ export function MonthComparison() {
       <div>
         <ApexChart
           type="line"
+          height={400}
           toolbar={{
             show: false,
           }}

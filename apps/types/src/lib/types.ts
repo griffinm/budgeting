@@ -1,5 +1,9 @@
 import { User } from "@prisma/client";
 
+export interface MonthlyTotalResponse {
+  amount: number;
+}
+
 export interface DailySpend {
   date: Date;
   spend: number;

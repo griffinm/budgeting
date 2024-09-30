@@ -9,6 +9,30 @@ interface GetCumlativeDailySpendParams {
   year: number;
 }
 
+interface GetMonthlyTotalParams {
+  month: number;
+  year: number;
+  type: 'expenses' | 'income';
+}
+
+export async function getMonthlyTotal(
+  params: GetMonthlyTotalParams,
+): Promise<AxiosResponse<{ amount: number }>> {
+  const {
+    month,
+    year,
+    type,
+  } = params;
+
+  return baseClient.get(`${baseUrl}/monthly-total`, {
+    params: {
+      month,
+      year,
+      type,
+    },
+  });
+}
+
 export async function getCumlativeDailySpend(
   params: GetCumlativeDailySpendParams,
 ): Promise<AxiosResponse<DailySpend[]>> {

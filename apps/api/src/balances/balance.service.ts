@@ -2,8 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DailySpend } from '@budgeting/types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
-import { GetCumlativeMonthlySpendDto } from './dto/get-cumlative-monthly-spend.dto';
-
+import { 
+  sumTransactions,
+  EXLUDE_CARD_PAYMENTS,
+  EXPENSES_ONLY,
+  INCOME_ONLY,
+  EXCLUDE_TRANSFERS,
+  betweenDates,
+  allExpensesWithoutCardPayments,
+} from './utils';
 
 @Injectable()
 export class BalanceService {
@@ -13,6 +20,35 @@ export class BalanceService {
     private readonly prisma: PrismaService,
   ) {}
 
+  public async totalMonthySpend({
+    accountId,
+    monthNumber,
+    year,
+    type,
+  }: {
+    accountId: string;
+    monthNumber: number;
+    year: number;
+    type: 'expenses' | 'income';
+  }): Promise<number> {
+    this.logger.debug(`Getting total monthly spend for account ${accountId.substring(0, 7)} and month ${monthNumber} ${year}`);
+    
+    const monthStart = startOfMonth(new Date(year, monthNumber - 1, 1));
+    const monthEnd = endOfMonth(monthStart);
+
+    const transactions = await this.prisma.accountTransaction.findMany({
+      where: {
+        accountId,
+        ...betweenDates(monthStart, monthEnd),
+        ...(type === 'expenses' ? EXPENSES_ONLY : INCOME_ONLY),
+        ...EXLUDE_CARD_PAYMENTS,
+        ...EXCLUDE_TRANSFERS,
+      },
+    });
+
+    return Math.round(sumTransactions(transactions) * 100) / 100;
+  }
+
   public async cumlativeDailySpendForMonth({
     accountId,
     date,
@@ -21,26 +57,20 @@ export class BalanceService {
     date: Date;
   }): Promise<DailySpend[]> {
     this.logger.debug(`Getting cumulative daily spend for month for account ${accountId} and date ${date}`);
-
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
+    const startDate = startOfMonth(date);
+    const endDate = endOfMonth(date);
 
     // Get all the spend transactions for the month
     const transactions = await this.prisma.accountTransaction.findMany({
-      where: {
+      where: allExpensesWithoutCardPayments({
         accountId,
-        date: {
-          gte: monthStart,
-          lte: monthEnd,
-        },
-        amount: { gt: 0 },
-        // Exclude credit card payments
-        plaidCategoryDetail: { not: 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' }
-      },
+        startDate,
+        endDate,
+      }),
     });
 
     // Create a series of all days in this month
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
 
     // Create a map of the days in the month to the transactions
     const daysMap = daysInMonth.map((day) => {

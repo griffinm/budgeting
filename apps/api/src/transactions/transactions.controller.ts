@@ -4,7 +4,6 @@ import {
   Get, 
   UseGuards, 
   Req, 
-  Param,
   Query
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";

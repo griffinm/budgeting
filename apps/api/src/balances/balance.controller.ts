@@ -2,7 +2,8 @@ import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@budgeting/api/auth';
 import { BalanceService } from './balance.service';
 import { GetCumlativeMonthlySpendDto } from './dto/get-cumlative-monthly-spend.dto';
-import { DailySpend, RequestWithUser } from '@budgeting/types';
+import { DailySpend, MonthlyTotalResponse, RequestWithUser } from '@budgeting/types';
+import { GetMonthlyTotalDto } from './dto/get-month-total.dto';
 
 @Controller('balances')
 export class BalanceController {
@@ -22,5 +23,21 @@ export class BalanceController {
       accountId: req.user.accountId,
       date,
     });
+  }
+
+  @Get('monthly-total')
+  @UseGuards(AuthGuard)
+  async getMonthlyTotal(
+    @Req() req: RequestWithUser,
+    @Query() query: GetMonthlyTotalDto,
+  ): Promise<MonthlyTotalResponse> {
+    const amount= await this.balanceService.totalMonthySpend({
+      accountId: req.user.accountId,
+      monthNumber: parseInt(query.month),
+      year: parseInt(query.year),
+      type: query.type,
+    });
+
+    return { amount };
   }
 }
