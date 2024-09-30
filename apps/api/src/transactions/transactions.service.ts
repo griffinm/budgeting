@@ -164,6 +164,7 @@ export class TransactionsService {
         pending: transaction.pending,
         plaidCategoryPrimary: transaction.personal_finance_category.primary,
         plaidCategoryDetail: transaction.personal_finance_category.detailed,
+        merchantId: transaction.merchant_entity_id,
         syncEventId: syncEvent.id,
       })),
     });
