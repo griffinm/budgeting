@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaidService } from "@budgeting/plaid";
 import { PlaidTransactionsResponse } from "@budgeting/plaid";
@@ -92,6 +92,59 @@ export class TransactionsService {
     }
   }
 
+  public async enrichTransactions(): Promise<void> {
+    this.logger.log('Starting transaction enrichment process.');
+    const transactionsToEnrich = await this.prismaService.accountTransaction.findMany({
+      where: { merchantId: null },
+      // Optionally, add a take here to limit the number of transactions processed at once
+      // take: 100, 
+    });
+
+    this.logger.debug(`Found ${transactionsToEnrich.length} transactions to enrich.`);
+
+    for (const transaction of transactionsToEnrich) {
+      try {
+        this.logger.debug(`Enriching transaction ${transaction.id}`);
+        const enrichedPlaidTransaction = await this.plaidService.enrichTransaction(transaction);
+
+        // Using top-level properties from ClientProvidedEnrichedTransaction based on Plaid docs
+        const plaidMerchantName = enrichedPlaidTransaction.enrichments.merchant_name;
+        const plaidEntityId = enrichedPlaidTransaction.enrichments.entity_id;
+        const plaidLogoUrl = enrichedPlaidTransaction.enrichments.logo_url;
+        const plaidWebsite = enrichedPlaidTransaction.enrichments.website;
+
+        if (plaidMerchantName && plaidEntityId) {
+          // Ensure prisma generate has run for plaidEntityId to be recognized in MerchantWhereUniqueInput
+          const merchant = await this.prismaService.merchant.upsert({
+            where: { plaidEntityId: plaidEntityId }, 
+            update: {
+              merchantName: plaidMerchantName,
+              logoUrl: plaidLogoUrl,
+              website: plaidWebsite,
+            },
+            create: {
+              plaidEntityId: plaidEntityId,
+              merchantName: plaidMerchantName,
+              logoUrl: plaidLogoUrl,
+              website: plaidWebsite,
+            },
+          });
+
+          await this.prismaService.accountTransaction.update({
+            where: { id: transaction.id },
+            data: { merchantId: merchant.id },
+          });
+          this.logger.debug(`Successfully enriched transaction ${transaction.id} and linked to merchant ${merchant.id} (${plaidMerchantName})`);
+        } else {
+          this.logger.warn(`Enrichment did not return sufficient merchant details (name or entity_id) for transaction ${transaction.id}. Name: ${plaidMerchantName}, Entity ID: ${plaidEntityId}`);
+        }
+      } catch (error) {
+        this.logger.error(`Error enriching transaction ${transaction.id}: ${error.message}`, error.stack);
+      }
+    }
+    this.logger.log('Transaction enrichment process completed.');
+  }
+  
   private async updateTransactions({
     accessToken,  
     syncEvent,
@@ -165,6 +218,7 @@ export class TransactionsService {
         plaidCategoryPrimary: transaction.personal_finance_category.primary,
         plaidCategoryDetail: transaction.personal_finance_category.detailed,
         syncEventId: syncEvent.id,
+        merchantId: transaction.merchant_entity_id,
       })),
     });
 

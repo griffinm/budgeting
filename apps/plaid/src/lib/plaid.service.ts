@@ -7,10 +7,12 @@ import {
   Products,
   Transaction,
   RemovedTransaction,
+  EnrichTransactionDirection,
+  ClientProvidedEnrichedTransaction,
 } from "plaid";
 import { ConfigService } from "@nestjs/config";
 import { AccountBase } from "plaid";
-
+import { AccountTransaction, Merchant } from "@prisma/client";
 export interface PlaidTransactionsResponse {
   cursor?: string;
   has_more: boolean;
@@ -54,6 +56,21 @@ export class PlaidService {
       transactionsRemoved,
       transactionsModified,
     };
+  }
+
+  public async enrichTransaction(transaction: AccountTransaction): Promise<ClientProvidedEnrichedTransaction> {
+    const enrichedTransaction = await this.plaidClient.transactionsEnrich({
+      account_type: "depository",
+      transactions: [{
+        id: transaction.id,
+        description: transaction.name,
+        amount: transaction.amount,
+        iso_currency_code: transaction.currencyCode,
+        direction: transaction.amount > 0 ? EnrichTransactionDirection.Inflow : EnrichTransactionDirection.Outflow,
+      }],
+    });
+
+    return enrichedTransaction.data.enriched_transactions[0];
   }
 
   public async createLinkToken(userId: string): Promise<string> {
