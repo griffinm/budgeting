@@ -1,4 +1,5 @@
 import { ConnectedAccountEntity } from "@budgeting/api/connected-accounts/dto/connected-account.entity";
+import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { Exclude, Expose, Type } from "class-transformer";
 import { 
   IsString, 
@@ -78,6 +79,15 @@ export class AccountTransactionEntity {
   @IsDate()
   @IsOptional()
   updatedAt: Date;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  merchantId: string;
+  
+  @Expose()
+  @Type(() => MerchantEntity)
+  merchant: MerchantEntity;
 
   @Expose()
   @Type(() => ConnectedAccountEntity)

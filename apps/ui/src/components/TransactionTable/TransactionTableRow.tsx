@@ -1,6 +1,8 @@
 import { AccountTransactionEntity } from "@budgeting/api/transactions/dto/transaction.entity";
 import { TableRow, TableCell, Chip } from "@mui/material";
 import { format as formatDate } from "date-fns";
+import { getMerchantName } from "./utils";
+import { MerchantLogo } from "../MerchantLogo/MerchantLogo";
 
 interface Props {
   transaction: AccountTransactionEntity;
@@ -45,7 +47,12 @@ export function TransactionTableRow({ transaction }: Props) {
         {formatAmount(transaction.amount)}
       </TableCell>
       <TableCell>
-        {transaction.name}
+        <div className="flex items-center gap-2">
+          <MerchantLogo merchant={transaction.merchant} fallbackText={getMerchantName(transaction)} />
+          <div className="flex flex-col">
+            {getMerchantName(transaction)}
+          </div>
+        </div>
       </TableCell>
       <TableCell></TableCell>
     </TableRow>

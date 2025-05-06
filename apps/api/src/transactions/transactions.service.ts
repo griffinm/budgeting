@@ -35,6 +35,7 @@ export class TransactionsService {
       },
       include: {
         connectedAccount: true,
+        merchant: true,
       },
       skip: (page - 1) * pageSize,
       take: parseInt(pageSize.toString()),
