@@ -3,6 +3,7 @@ import { fetchMerchant } from "@budgeting/ui/utils/api";
 import { Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { MerchantTransactions } from "./MerchantTransactions";
+import { MerchantTotals } from "./MerchantTotals";
 
 export function MerchantView({
   merchantId,
@@ -27,10 +28,21 @@ export function MerchantView({
         <Typography variant="h4">{merchant?.merchantName}</Typography>
       </div>
 
-      <Typography variant="h5">Transactions</Typography>
-      <MerchantTransactions
-        merchantId={merchantId}
-      />
+      <div className="mb-10">
+        <div className="mb-2">
+          <Typography variant="h5">Spend Summary</Typography>
+        </div>
+        <MerchantTotals merchantId={merchantId} />
+      </div>
+
+      <div className="mb-10">
+        <div className="mb-2">
+          <Typography variant="h5">Transactions</Typography>
+        </div>
+        <MerchantTransactions
+          merchantId={merchantId}
+        />
+      </div>
     </div>
   )
 }

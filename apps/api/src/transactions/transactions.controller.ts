@@ -30,10 +30,7 @@ export class TransactionsController {
   ): Promise<PagedResponse<AccountTransactionEntity>> {
     const transactions = await this.transactionsService.searchTransactions({ 
       accountId: req.user.accountId, 
-      startDate: filter.startDate,
-      endDate: filter.endDate,
-      merchantId: filter.merchantId,
-      connectedAccountId: filter.connectedAccountId,
+      transactionFilter: filter,
       page: pageRequest.page, 
       pageSize: pageRequest.pageSize,
     });
@@ -46,6 +43,17 @@ export class TransactionsController {
       currentPage: transactions.currentPage,
       pageSize: transactions.pageSize,
     };
+  }
+
+  @Get('/transactions/total')
+  async getTransactionTotal(
+    @Req() req: RequestWithUser,
+    @Query() filter: TransactionFilter,
+  ): Promise<number> {
+    return this.transactionsService.getTransactionTotal({ 
+      accountId: req.user.accountId, 
+      transactionFilter: filter,
+    });
   }
 
   @Post('transactions/sync')

@@ -31,17 +31,15 @@ export function MerchantTransactions({
   }, [merchantId, startDate, endDate, page, pageSize]);
 
   return (
-    <div>
-      <TransactionTable
-        transactions={transactions}
-        currentPage={page}
-        onPageChange={setPage}
-        pageSize={pageSize}
-        onPageSizeChange={setPageSize}
-        totalRecords={totalRecords}
-        loading={loading}
-        showColumns={["date", "account", "amount", "actions"]}
-      />
-    </div>
+    <TransactionTable
+      transactions={transactions}
+      currentPage={page}
+      onPageChange={setPage}
+      pageSize={pageSize}
+      onPageSizeChange={setPageSize}
+      totalRecords={totalRecords}
+      loading={loading}
+      showColumns={["date", "account", "amount", "actions"]}
+    />
   )
 }

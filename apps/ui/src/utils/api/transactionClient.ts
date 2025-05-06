@@ -17,8 +17,37 @@ export async function fetchTransactions({
   pagedRequest: PagedRequest;
   filter: TransactionFilter;
 }): Promise<AxiosResponse<PagedResponse<AccountTransactionEntity>>> {
-  const { page, pageSize } = pagedRequest;
-  let url = `${baseUrl}?page=${page}&pageSize=${pageSize}`;
+  const url = buildUrl({ pagedRequest, filter, endpoint: 'search' });
+
+  return baseClient.get(url);
+}
+
+export async function getTransactionTotal({
+  filter,
+}: {
+  filter: TransactionFilter;
+}): Promise<AxiosResponse<number>> {
+  const url = buildUrl({ filter, endpoint: 'total' });
+
+  return baseClient.get(url);
+}
+
+function buildUrl({
+  pagedRequest,
+  filter,
+  endpoint,
+}: {
+  pagedRequest?: PagedRequest;
+  filter: TransactionFilter;
+  endpoint: 'total' | 'search';
+}) {
+  let url = `${baseUrl}`;
+
+  if (endpoint === 'search') {
+    url += '?';
+  } else {
+    url += '/total?';
+  }
 
   if (filter.merchantId) {
     url += `&merchantId=${encodeURIComponent(filter.merchantId)}`;
@@ -32,5 +61,13 @@ export async function fetchTransactions({
     url += `&connectedAccountId=${encodeURIComponent(filter.connectedAccountId)}`
   }
 
-  return baseClient.get(url);
+  if (pagedRequest?.page) {
+    url += `&page=${pagedRequest.page}`;
+  }
+
+  if (pagedRequest?.pageSize) {
+    url += `&pageSize=${pagedRequest.pageSize}`;
+  }
+
+  return url;
 }

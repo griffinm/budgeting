@@ -15,32 +15,37 @@ export class TransactionsService {
     private readonly plaidService: PlaidService,
   ) {}
 
-  public async searchTransactions({
+  public async getTransactionTotal({
+    transactionFilter,
     accountId,
-    startDate,
-    endDate,
-    merchantId,
-    connectedAccountId,
+  }: {
+    transactionFilter: TransactionFilter;
+    accountId: string;
+  }): Promise<number> {
+    const transactions = await this.searchTransactions({ transactionFilter, accountId, page: 1, pageSize: 10000 });
+    return transactions.data.reduce((acc, transaction) => acc + transaction.amount, 0);
+  }
+
+  public async searchTransactions({
+    transactionFilter,
+    accountId,
     page = 1,
     pageSize = 10,
   }: {
+    transactionFilter: TransactionFilter;
     accountId: string;
-    startDate?: Date;
-    endDate?: Date;
-    merchantId?: string;
-    connectedAccountId?: string;
     page: number;
     pageSize: number;
   }): Promise<PagedResponse<AccountTransaction>> {
-    this.logger.log(`Searching for transactions for account ${accountId} with merchantId ${merchantId} and connectedAccountId ${connectedAccountId} and startDate ${startDate} and endDate ${endDate}`);
+    this.logger.log(`Searching for transactions for account ${accountId} with merchantId ${transactionFilter.merchantId} and connectedAccountId ${transactionFilter.connectedAccountId} and startDate ${transactionFilter.startDate} and endDate ${transactionFilter.endDate}`);
 
     const transactions = await this.prismaService.accountTransaction.findMany({
       where: {
         accountId,
-        ...(merchantId && { merchantId }),
-        ...(startDate && { date: { gte: startDate } }),
-        ...(endDate && { date: { lte: endDate } }),
-        ...(connectedAccountId && { connectedAccountId }),
+        ...(transactionFilter.merchantId && { merchantId: transactionFilter.merchantId }),
+        ...(transactionFilter.startDate && { date: { gte: transactionFilter.startDate } }),
+        ...(transactionFilter.endDate && { date: { lte: transactionFilter.endDate } }),
+        ...(transactionFilter.connectedAccountId && { connectedAccountId: transactionFilter.connectedAccountId }),
       },
       include: {
         connectedAccount: true,
@@ -55,10 +60,10 @@ export class TransactionsService {
     const totalRecords = await this.prismaService.accountTransaction.count({
       where: {
         accountId,
-        ...(merchantId && { merchantId }),
-        ...(startDate && { date: { gte: startDate } }),
-        ...(endDate && { date: { lte: endDate } }),
-        ...(connectedAccountId && { connectedAccountId }),
+        ...(transactionFilter.merchantId && { merchantId: transactionFilter.merchantId }),
+        ...(transactionFilter.startDate && { date: { gte: transactionFilter.startDate } }),
+        ...(transactionFilter.endDate && { date: { lte: transactionFilter.endDate } }),
+        ...(transactionFilter.connectedAccountId && { connectedAccountId: transactionFilter.connectedAccountId }),
       }
     });
 
