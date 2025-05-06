@@ -8,6 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { BalanceModule } from '../balances/balance.module';
+import { MerchantsModule } from '../merchants/merchants.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BalanceModule } from '../balances/balance.module';
     PrismaModule,
     TransactionsModule,
     UsersModule,
+    MerchantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

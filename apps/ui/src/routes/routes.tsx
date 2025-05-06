@@ -9,6 +9,7 @@ const HomePage = lazy(() => import('../pages/home'));
 const AccountsPage = lazy(() => import('../pages/accounts'));
 const ProfilePage = lazy(() => import('../pages/profile'));
 const TransactionsPage = lazy(() => import('../pages/transactions'));
+const MerchantPage = lazy(() => import('../pages/merchant'));
 
 export function AppRoutes() {
 
@@ -40,6 +41,10 @@ export function AppRoutes() {
         <Route 
           path="/transactions" 
           element={withSuspense(TransactionsPage)} 
+        />
+        <Route 
+          path="/merchants/:merchantId" 
+          element={withSuspense(MerchantPage)} 
         />
       </Route>
     </Routes>

@@ -3,39 +3,29 @@ import {
   Receipt,
   AccountBalance,
   Person,
+  Store,
 } from "@mui/icons-material"
 
 // ----------------------------------------------------------------------
 
 export const NAV_ITEMS = [
   {
-    // subheader: 'Marketing',
     items: [
       {
         title: 'Dashboard',
         path: '/',
         icon: <Home />,
-        // caption: 'Display only admin role',
       },
       {
         title: 'Transactions',
-        path: '/Transactions',
+        path: '/transactions',
         icon: <Receipt />,
       },
-      // {
-      //   title: 'Blog',
-      //   path: '#blog',
-      //   icon: <Home />,
-      //   children: [
-      //     {
-      //       title: 'Item 1',
-      //       path: '#blog/item-1',
-      //       caption: 'Display caption',
-      //       info: '+2',
-      //     },
-      //     { title: 'Item 2', path: '#blog/item-2' },
-      //   ],
-      // },
+      {
+        title: 'Merchants',
+        path: '/merchants',
+        icon: <Store />,
+      },
     ],
   },
   {

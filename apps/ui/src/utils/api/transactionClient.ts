@@ -2,12 +2,9 @@ import { PagedRequest, PagedResponse } from "@budgeting/types";
 import { baseClient } from "./baseClient";
 import { AccountTransactionEntity } from "@budgeting/api/transactions/dto/transaction.entity";
 import { AxiosResponse } from "axios";
+import { TransactionFilter } from "@budgeting/api/transactions/dto/transaction-filter";
 
 const baseUrl = '/transactions';
-
-interface TransactionFilter {
-  connectedAccountId?: string,
-}
 
 export async function syncTransactions(): Promise<AxiosResponse<{ success: boolean }>> {
   return baseClient.post(`${baseUrl}/sync`);
@@ -23,6 +20,14 @@ export async function fetchTransactions({
   const { page, pageSize } = pagedRequest;
   let url = `${baseUrl}?page=${page}&pageSize=${pageSize}`;
 
+  if (filter.merchantId) {
+    url += `&merchantId=${encodeURIComponent(filter.merchantId)}`;
+  }
+
+  if (filter.startDate) {
+    url += `&startDate=${encodeURIComponent(filter.startDate.toISOString())}`;
+  }
+  
   if (filter.connectedAccountId) {
     url += `&connectedAccountId=${encodeURIComponent(filter.connectedAccountId)}`
   }

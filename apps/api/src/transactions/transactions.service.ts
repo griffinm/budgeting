@@ -15,23 +15,32 @@ export class TransactionsService {
     private readonly plaidService: PlaidService,
   ) {}
 
-  public async findAllForAccount({
+  public async searchTransactions({
     accountId,
+    startDate,
+    endDate,
+    merchantId,
+    connectedAccountId,
     page = 1,
     pageSize = 10,
-    filter,
   }: {
     accountId: string;
+    startDate?: Date;
+    endDate?: Date;
+    merchantId?: string;
+    connectedAccountId?: string;
     page: number;
     pageSize: number;
-    filter: TransactionFilter;
   }): Promise<PagedResponse<AccountTransaction>> {
-    this.logger.debug(`Finding all transactions for account ${accountId.substring(0, 7)}`);
+    this.logger.log(`Searching for transactions for account ${accountId} with merchantId ${merchantId} and connectedAccountId ${connectedAccountId} and startDate ${startDate} and endDate ${endDate}`);
 
     const transactions = await this.prismaService.accountTransaction.findMany({
-      where: { 
+      where: {
         accountId,
-        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
+        ...(merchantId && { merchantId }),
+        ...(startDate && { date: { gte: startDate } }),
+        ...(endDate && { date: { lte: endDate } }),
+        ...(connectedAccountId && { connectedAccountId }),
       },
       include: {
         connectedAccount: true,
@@ -43,13 +52,14 @@ export class TransactionsService {
         date: "desc",
       },
     });
-
     const totalRecords = await this.prismaService.accountTransaction.count({
-      where: { 
+      where: {
         accountId,
-        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
-      },
-
+        ...(merchantId && { merchantId }),
+        ...(startDate && { date: { gte: startDate } }),
+        ...(endDate && { date: { lte: endDate } }),
+        ...(connectedAccountId && { connectedAccountId }),
+      }
     });
 
     return {
@@ -91,59 +101,6 @@ export class TransactionsService {
         accountId,
       });
     }
-  }
-
-  public async enrichTransactions(): Promise<void> {
-    this.logger.log('Starting transaction enrichment process.');
-    const transactionsToEnrich = await this.prismaService.accountTransaction.findMany({
-      where: { merchantId: null },
-      // Optionally, add a take here to limit the number of transactions processed at once
-      // take: 100, 
-    });
-
-    this.logger.debug(`Found ${transactionsToEnrich.length} transactions to enrich.`);
-
-    for (const transaction of transactionsToEnrich) {
-      try {
-        this.logger.debug(`Enriching transaction ${transaction.id}`);
-        const enrichedPlaidTransaction = await this.plaidService.enrichTransaction(transaction);
-
-        // Using top-level properties from ClientProvidedEnrichedTransaction based on Plaid docs
-        const plaidMerchantName = enrichedPlaidTransaction.enrichments.merchant_name;
-        const plaidEntityId = enrichedPlaidTransaction.enrichments.entity_id;
-        const plaidLogoUrl = enrichedPlaidTransaction.enrichments.logo_url;
-        const plaidWebsite = enrichedPlaidTransaction.enrichments.website;
-
-        if (plaidMerchantName && plaidEntityId) {
-          // Ensure prisma generate has run for plaidEntityId to be recognized in MerchantWhereUniqueInput
-          const merchant = await this.prismaService.merchant.upsert({
-            where: { plaidEntityId: plaidEntityId }, 
-            update: {
-              merchantName: plaidMerchantName,
-              logoUrl: plaidLogoUrl,
-              website: plaidWebsite,
-            },
-            create: {
-              plaidEntityId: plaidEntityId,
-              merchantName: plaidMerchantName,
-              logoUrl: plaidLogoUrl,
-              website: plaidWebsite,
-            },
-          });
-
-          await this.prismaService.accountTransaction.update({
-            where: { id: transaction.id },
-            data: { merchantId: merchant.id },
-          });
-          this.logger.debug(`Successfully enriched transaction ${transaction.id} and linked to merchant ${merchant.id} (${plaidMerchantName})`);
-        } else {
-          this.logger.warn(`Enrichment did not return sufficient merchant details (name or entity_id) for transaction ${transaction.id}. Name: ${plaidMerchantName}, Entity ID: ${plaidEntityId}`);
-        }
-      } catch (error) {
-        this.logger.error(`Error enriching transaction ${transaction.id}: ${error.message}`, error.stack);
-      }
-    }
-    this.logger.log('Transaction enrichment process completed.');
   }
   
   private async updateTransactions({

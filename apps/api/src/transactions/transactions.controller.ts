@@ -4,33 +4,38 @@ import {
   Get, 
   UseGuards, 
   Req, 
-  Query
+  Query,
+  Param
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { AuthGuard } from "@budgeting/api/auth";
-import { PagedRequest, PagedResponse, RequestWithUser } from "@budgeting/types";
+import { PagedResponse, RequestWithUser } from "@budgeting/types";
 import { AccountTransactionEntity } from "./dto/transaction.entity";
 import { plainToInstance } from "class-transformer";
 import { TransactionFilter } from "./dto/transaction-filter";
+import { PagedRequestDto } from "../common/dto/paged-request.dto";
 
-@Controller('transactions')
+@Controller()
 @UseGuards(AuthGuard)
 export class TransactionsController {
   constructor(
     private readonly transactionsService: TransactionsService,
   ) {}
 
-  @Get()
+  @Get('/transactions')
   async findAllForAccount(
     @Req() req: RequestWithUser,
-    @Query() pageRequest: PagedRequest,
+    @Query() pageRequest: PagedRequestDto,
     @Query() filter: TransactionFilter,
   ): Promise<PagedResponse<AccountTransactionEntity>> {
-    const transactions = await this.transactionsService.findAllForAccount({ 
+    const transactions = await this.transactionsService.searchTransactions({ 
       accountId: req.user.accountId, 
+      startDate: filter.startDate,
+      endDate: filter.endDate,
+      merchantId: filter.merchantId,
+      connectedAccountId: filter.connectedAccountId,
       page: pageRequest.page, 
       pageSize: pageRequest.pageSize,
-      filter,
     });
 
     const transactionsEntites = plainToInstance(AccountTransactionEntity, transactions.data);
@@ -43,7 +48,7 @@ export class TransactionsController {
     };
   }
 
-  @Post('/sync')
+  @Post('transactions/sync')
   async syncTransactions(
     @Req() req: RequestWithUser,
   ): Promise<{ success: boolean }> {
