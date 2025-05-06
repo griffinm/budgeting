@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaidService } from "@budgeting/plaid";
 import { PlaidTransactionsResponse } from "@budgeting/plaid";
-import { AccessToken, AccountTransaction, SyncEvent, SyncEventStatus } from "@prisma/client";
+import { AccessToken, AccountTransaction, Prisma, SyncEvent, SyncEventStatus } from "@prisma/client";
 import { PagedResponse } from "@budgeting/types";
 import { TransactionFilter } from "./dto/transaction-filter";
 
@@ -181,6 +181,7 @@ export class TransactionsService {
           endedAt: new Date(),
         },
       });
+      this.logger.log(`Sync for accessToken ${newAccessToken.id} (syncEvent ${syncEvent.id}) completed.`);
     }
   }
 
@@ -197,51 +198,115 @@ export class TransactionsService {
       plaidTransactions.transactionsAdded.length + 
       plaidTransactions.transactionsModified.length + 
       plaidTransactions.transactionsRemoved.length;
-    this.logger.debug(`Processing ${totalTransactions} transactions`);
+    this.logger.debug(`Processing ${totalTransactions} transactions for syncEvent ${syncEvent.id}`);
 
     // Create new transactions
     this.logger.debug(`Creating ${plaidTransactions.transactionsAdded.length} new transactions`);
+    for (const plaidTransaction of plaidTransactions.transactionsAdded) {
+      let merchantIdForDb: string | null = null;
+      if (plaidTransaction.merchant_entity_id) {
+        try {
+          const merchant = await this.prismaService.merchant.upsert({
+            where: { plaidEntityId: plaidTransaction.merchant_entity_id },
+            create: {
+              plaidEntityId: plaidTransaction.merchant_entity_id,
+              merchantName: plaidTransaction.merchant_name, // merchant_name from Plaid sync, can be null
+            },
+            update: {
+              ...(plaidTransaction.merchant_name && { merchantName: plaidTransaction.merchant_name }),
+            },
+          });
+          merchantIdForDb = merchant.id;
+        } catch (error) {
+          this.logger.error(`Error upserting merchant with plaidEntityId ${plaidTransaction.merchant_entity_id}: ${error.message}`, error.stack);
+        }
+      }
 
-    await this.prismaService.accountTransaction.createMany({
-      data: plaidTransactions.transactionsAdded.map((transaction) => ({
-        id: transaction.transaction_id,
-        accountId,
-        connectedAccountId: transaction.account_id,
-        amount: transaction.amount,
-        name: transaction.name,
-        authorizedDate: new Date(transaction.authorized_date),
-        date: new Date(transaction.date),
-        checkNumber: transaction.check_number,
-        currencyCode: transaction.iso_currency_code,
-        paymentChannel: transaction.payment_channel,
-        pending: transaction.pending,
-        plaidCategoryPrimary: transaction.personal_finance_category.primary,
-        plaidCategoryDetail: transaction.personal_finance_category.detailed,
-        syncEventId: syncEvent.id,
-        merchantId: transaction.merchant_entity_id,
-      })),
-    });
+      try {
+        await this.prismaService.accountTransaction.upsert({
+          where: { id: plaidTransaction.transaction_id },
+          create: {
+            id: plaidTransaction.transaction_id,
+            accountId,
+            connectedAccountId: plaidTransaction.account_id,
+            amount: plaidTransaction.amount,
+            name: plaidTransaction.name,
+            authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : null,
+            date: plaidTransaction.date ? new Date(plaidTransaction.date) : null,
+            checkNumber: plaidTransaction.check_number,
+            currencyCode: plaidTransaction.iso_currency_code,
+            paymentChannel: plaidTransaction.payment_channel,
+            pending: plaidTransaction.pending,
+            plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+            plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+            syncEventId: syncEvent.id,
+            merchantId: merchantIdForDb,
+          },
+          update: {
+            amount: plaidTransaction.amount,
+            name: plaidTransaction.name,
+            authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : null,
+            date: plaidTransaction.date ? new Date(plaidTransaction.date) : null,
+            checkNumber: plaidTransaction.check_number,
+            currencyCode: plaidTransaction.iso_currency_code,
+            paymentChannel: plaidTransaction.payment_channel,
+            pending: plaidTransaction.pending,
+            plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+            plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+            syncEventId: syncEvent.id,
+            merchantId: merchantIdForDb,
+          }
+        });
+      } catch (error) {
+        this.logger.error(`Error creating transaction ${plaidTransaction.transaction_id}: ${error.message}`, error.stack);
+      }
+    }
 
     // Update existing transactions
     this.logger.debug(`Updating ${plaidTransactions.transactionsModified.length} modified transactions`);
-    for (const transaction of plaidTransactions.transactionsModified) {
-      await this.prismaService.accountTransaction.update({
-        where: {
-          id: transaction.transaction_id,
-        },
-        data: {
-          date: new Date(transaction.date),
-          pending: transaction.pending,
-          plaidCategoryPrimary: transaction.personal_finance_category.primary,
-          plaidCategoryDetail: transaction.personal_finance_category.detailed,
-          amount: transaction.amount,
-          name: transaction.name,
-          authorizedDate: new Date(transaction.authorized_date),
-          checkNumber: transaction.check_number,
-          currencyCode: transaction.iso_currency_code,
-          syncEventId: syncEvent.id,
-        },
-      });
+    for (const plaidTransaction of plaidTransactions.transactionsModified) {
+      const updateData: Prisma.AccountTransactionUpdateInput = {
+        date: plaidTransaction.date ? new Date(plaidTransaction.date) : undefined,
+        pending: plaidTransaction.pending,
+        plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+        plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+        amount: plaidTransaction.amount,
+        name: plaidTransaction.name,
+        authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : undefined,
+        checkNumber: plaidTransaction.check_number,
+        currencyCode: plaidTransaction.iso_currency_code,
+        syncEvent: { connect: { id: syncEvent.id } },
+      };
+
+      if (plaidTransaction.merchant_entity_id) {
+        try {
+          const merchant = await this.prismaService.merchant.upsert({
+            where: { plaidEntityId: plaidTransaction.merchant_entity_id },
+            create: {
+              plaidEntityId: plaidTransaction.merchant_entity_id,
+              merchantName: plaidTransaction.merchant_name,
+            },
+            update: {
+              ...(plaidTransaction.merchant_name && { merchantName: plaidTransaction.merchant_name }),
+            },
+          });
+          updateData.merchant = { connect: { id: merchant.id } };
+        } catch (error) {
+          this.logger.error(`Error upserting merchant for modified transaction ${plaidTransaction.transaction_id} with plaidEntityId ${plaidTransaction.merchant_entity_id}: ${error.message}`, error.stack);
+        }
+      } else {
+        // If you want to explicitly disconnect a merchant if plaidTransaction.merchant_entity_id is null:
+        // updateData.merchant = { disconnect: true };
+      }
+
+      try {
+        await this.prismaService.accountTransaction.update({
+          where: { id: plaidTransaction.transaction_id },
+          data: updateData,
+        });
+      } catch (error) {
+        this.logger.error(`Error updating transaction ${plaidTransaction.transaction_id}: ${error.message}`, error.stack);
+      }
     }
 
     // Remove deleted transactions
