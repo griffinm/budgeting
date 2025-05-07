@@ -173,7 +173,8 @@ export class TransactionsService {
             where: { plaidEntityId: plaidTransaction.merchant_entity_id },
             create: {
               plaidEntityId: plaidTransaction.merchant_entity_id,
-              merchantName: plaidTransaction.merchant_name, // merchant_name from Plaid sync, can be null
+              merchantName: plaidTransaction.merchant_name,
+              accountId,
             },
             update: {
               ...(plaidTransaction.merchant_name && { merchantName: plaidTransaction.merchant_name }),

@@ -31,7 +31,8 @@ model Account {
   transactions      AccountTransaction[] @relation("AccountTransactionsAccount")
   connectedAccounts ConnectedAccount[]   @relation("ConnectedAccountsAccount")
   users             User[]               @relation("AccountUsers")
-
+  merchants         Merchant[]           @relation("MerchantsAccount")
+  merchantCategories MerchantCategory[] @relation("MerchantCategoriesAccount")
   @@map("accounts")
 }
 
@@ -122,9 +123,26 @@ model Merchant {
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   friendlyName       String?              @map("friendly_name")
+  accountId          String?              @map("account_id")
+  merchantCategoryId String?              @map("merchant_category_id")
   AccountTransaction AccountTransaction[] @relation("AccountTransactionsMerchant")
+  account            Account?             @relation("MerchantsAccount", fields: [accountId], references: [id])
+  merchantCategory   MerchantCategory?    @relation("MerchantsMerchantCategory", fields: [merchantCategoryId], references: [id])
 
   @@map("merchants")
+}
+
+model MerchantCategory {
+  id String @id @default(uuid()) @map("id")
+  accountId String @map("account_id")
+  name String @map("name")
+  description String? @map("description")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  account Account @relation("MerchantCategoriesAccount", fields: [accountId], references: [id])
+  merchants Merchant[] @relation("MerchantsMerchantCategory")
+
+  @@map("merchant_categories")
 }
 
 view DailyBalance {

@@ -7,6 +7,7 @@ import { urls } from "@budgeting/ui/utils/urls";
 import { Link as RouterLink } from "react-router-dom";
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { TransactionTableColumn } from "./TransactionTable";
+import { OpenInNew } from "@mui/icons-material";
 interface Props {
   transaction: AccountTransactionEntity;
   showColumns: TransactionTableColumn[];
@@ -61,8 +62,11 @@ export function TransactionTableRow({ transaction, showColumns }: Props) {
           <MerchantLink merchant={transaction.merchant}>
           <div className="flex items-center gap-2">
               <MerchantLogo merchant={transaction.merchant} fallbackText={getMerchantName(transaction)} />
-              <div className="flex flex-col">
-                {getMerchantName(transaction)}
+              <div className="flex flex-row gap-2">
+                <div>
+                  {getMerchantName(transaction)}
+                </div>
+                {transaction.merchant?.id && <OpenInNew fontSize="small" />}
               </div>
             </div>
           </MerchantLink>

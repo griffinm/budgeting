@@ -63,5 +63,9 @@ export class MerchantEntity {
   @IsDate()
   @IsOptional()
   updatedAt: Date;
-  
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  merchantCategoryId: string;
 }

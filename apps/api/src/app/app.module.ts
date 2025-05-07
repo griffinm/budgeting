@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { BalanceModule } from '../balances/balance.module';
 import { MerchantsModule } from '../merchants/merchants.module';
+import { MerchantCategoryModule } from '../merchant-category/merchant-category.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MerchantsModule } from '../merchants/merchants.module';
     AuthModule,
     BalanceModule,
     ConnectedAccountModule,
+    MerchantCategoryModule,
     PrismaModule,
     TransactionsModule,
     UsersModule,
