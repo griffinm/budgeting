@@ -2,6 +2,8 @@ import { baseClient } from "./baseClient";
 import { AxiosResponse } from "axios";
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { PagedRequest, PagedResponse } from "@budgeting/types";
+import { UpdateMerchantDto } from "@budgeting/api/merchants/dto/update-merchant.dto";
+
 const baseUrl = '/merchants';
 
 export async function fetchMerchant(id: string): Promise<AxiosResponse<MerchantEntity>> {
@@ -16,13 +18,12 @@ export async function fetchMerchants(
   return resp.data;
 }
 
-export async function updateMerchantCategory(
-  merchantId: string,
-  merchantCategoryId: string | null,
-  // accountId might be implicitly handled by auth or needed if API requires it for namespacing/permission
-  // accountId: string 
-): Promise<AxiosResponse<MerchantEntity>> {
-  return baseClient.patch<MerchantEntity>(`${baseUrl}/${merchantId}`, {
-    merchantCategoryId,
-  });
+export async function updateMerchant({
+  id,
+  updateMerchantDto,
+}: {
+  id: string;
+  updateMerchantDto: UpdateMerchantDto;
+}): Promise<AxiosResponse<MerchantEntity>> {
+  return baseClient.patch<MerchantEntity>(`${baseUrl}/${id}`, updateMerchantDto);
 }

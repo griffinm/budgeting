@@ -141,6 +141,7 @@ model MerchantCategory {
   updatedAt DateTime @updatedAt @map("updated_at")
   account Account @relation("MerchantCategoriesAccount", fields: [accountId], references: [id])
   merchants Merchant[] @relation("MerchantsMerchantCategory")
+  color String @map("color")
 
   @@map("merchant_categories")
 }

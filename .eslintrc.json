@@ -19,7 +19,7 @@
           "error",
           {
             "enforceBuildableLibDependency": true,
-            "allow": [],
+            "allow": ["@budgeting/ui", "@budgeting/api"],
             "depConstraints": [
               {
                 "sourceTag": "*",

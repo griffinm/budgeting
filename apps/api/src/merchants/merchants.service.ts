@@ -31,6 +31,9 @@ export class MerchantsService {
           },
         },
       },
+      include: {
+        merchantCategory: true,
+      },
       skip: pagedRequest.page * pagedRequest.pageSize,
       take: pagedRequest.pageSize,
     });
@@ -114,14 +117,19 @@ export class MerchantsService {
 
   public async update({
     id,
+    accountId,
     updateMerchantDto,
   }: {
     id: string;
+    accountId: string;
     updateMerchantDto: UpdateMerchantDto;
   }): Promise<Merchant> {
     return this.prismaService.merchant.update({
-      where: { id },
+      where: { id, accountId },
       data: updateMerchantDto,
+      include: {
+        merchantCategory: true,
+      },
     });
   }
 
@@ -141,6 +149,7 @@ export class MerchantsService {
       // if found, update it
       merchant = await this.update({
         id: merchant.id,
+        accountId,
         updateMerchantDto: {
           merchantName: plaidName,
           plaidEntityId: plaidId,

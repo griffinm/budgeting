@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param, Query, Req, UseGuards, Post, Body, ValidationPipe } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param, Query, Req, UseGuards, Post, Body, ValidationPipe, Patch } from "@nestjs/common";
 import { AuthGuard } from "../auth/auth.guard";
 import { MerchantsService } from "./merchants.service";
 import { plainToInstance } from "class-transformer";
@@ -6,7 +6,7 @@ import { MerchantEntity } from "./dto/merchant.entity";
 import { RequestWithUser } from "@budgeting/types";
 import { PagedRequestDto } from "../common/dto/paged-request.dto";
 import { CreateMerchantDto } from "./dto/create-merchant.dto";
-
+import { UpdateMerchantDto } from "./dto/update-merchant.dto";
 @Controller('merchants')
 @UseGuards(AuthGuard)
 export class MerchantController {
@@ -19,6 +19,21 @@ export class MerchantController {
     @Body(new ValidationPipe({ transform: true, whitelist: true })) createMerchantDto: CreateMerchantDto,
   ) {
     const merchant = await this.merchantsService.create(createMerchantDto);
+    return plainToInstance(MerchantEntity, merchant);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateMerchantDto: UpdateMerchantDto,
+    @Req() req: RequestWithUser,
+  ) {
+    const merchant = await this.merchantsService.update({
+      id,
+      accountId: req.user.accountId,
+      updateMerchantDto,
+    });
+    
     return plainToInstance(MerchantEntity, merchant);
   }
 

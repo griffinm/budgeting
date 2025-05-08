@@ -1,4 +1,5 @@
-import { Exclude, Expose } from "class-transformer";
+import { MerchantCategoryEntity } from "@budgeting/api/merchant-category/dto/merchant-category.entity";
+import { Exclude, Expose, Type } from "class-transformer";
 import { IsDate, IsOptional, IsString } from "class-validator";
 
 @Exclude()
@@ -66,4 +67,10 @@ export class MerchantEntity {
   @IsString()
   @IsOptional()
   merchantCategoryId?: string;
+
+  @Expose()
+  @IsString()
+  @IsOptional()
+  @Type(() => MerchantCategoryEntity)
+  merchantCategory?: MerchantCategoryEntity;
 }

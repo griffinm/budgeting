@@ -8,5 +8,6 @@ export class UpdateMerchantDto extends PickType(
     'plaidEntityId',
     'merchantCategoryId',
     'friendlyName',
+    'merchantCategoryId',
   ],
 ) {}
