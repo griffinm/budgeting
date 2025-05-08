@@ -106,7 +106,7 @@ function MerchantCategoryEditor({
           value={merchantCategory}
           getOptionLabel={(option) => option.name ?? ""}
           renderOption={(props, option) => (
-            <li {...props}>
+            <li {...props} key={option.id}>
               <div className="flex items-center gap-2" >
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: option.color }} />
                 {option.name}

@@ -1,6 +1,6 @@
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { fetchMerchant } from "@budgeting/ui/utils/api";
-import { Typography } from "@mui/material";
+import { Typography, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import { MerchantTransactions } from "./MerchantTransactions";
 import { MerchantTotals } from "./MerchantTotals";
@@ -21,6 +21,10 @@ export function MerchantView({
       setIsLoading(false);
     });
   }, [merchantId]);
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
   return (
     <div>

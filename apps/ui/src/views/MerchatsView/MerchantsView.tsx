@@ -12,7 +12,7 @@ export function MerchantsView() {
     setMerchantsLoading(true);
     fetchMerchants({
       page: 1,
-      pageSize: 10,
+      pageSize: 25,
     }).then((res) => {
       setMerchants(res.data);
     })
@@ -29,14 +29,28 @@ export function MerchantsView() {
       },
     });
 
-    setMerchants(merchants.map((merchant) => {
-      if (merchant.id === merchantId) {
-        return response.data;
-      }
-      return merchant;
-    }));
+    updateMerchantList(response.data);
   };  
   
+  const handleMerchantFriendlyNameUpdated = async (merchantId: string, newFriendlyName: string) => {
+    const response = await updateMerchant({
+      id: merchantId,
+      updateMerchantDto: {
+        friendlyName: newFriendlyName,
+      },
+    });
+
+    updateMerchantList(response.data);
+  };
+
+  const updateMerchantList = (merchant: MerchantEntity) => {
+    setMerchants(merchants.map((m) => {
+      if (m.id === merchant.id) {
+        return merchant;
+      }
+      return m;
+    }));
+  }
   return (
     <div>
       <div className="mb-5">
@@ -48,6 +62,7 @@ export function MerchantsView() {
         <MerchantsTable
           merchants={merchants}
           onMerchantCategoryUpdate={handleMerchantCategoryUpdated}
+          onMerchantNicknameUpdate={handleMerchantFriendlyNameUpdated}
         />
       )}
     </div>
