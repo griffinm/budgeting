@@ -4,6 +4,7 @@ import { Merchant } from "@prisma/client";
 import { PagedRequest, PagedResponse } from "@budgeting/types";
 import { CreateMerchantDto } from "./dto/create-merchant.dto";
 import { Prisma } from "@prisma/client";
+import { UpdateMerchantDto } from "./dto/update-merchant.dto";
 
 @Injectable()
 export class MerchantsService {
@@ -77,5 +78,88 @@ export class MerchantsService {
     return this.prismaService.merchant.create({
       data,
     });
+  }
+
+  public async findByPlaidNameOrPlaidId({
+    plaidName,
+    plaidId,
+    accountId,
+  }: {
+    plaidName?: string;
+    plaidId?: string;
+    accountId: string;
+  }): Promise<Merchant | null> {
+    let merchant: Merchant | null = null;
+
+    if (plaidId) {
+      merchant = await this.prismaService.merchant.findFirst({
+        where: { plaidEntityId: plaidId, accountId },
+      });
+
+      if (merchant) {
+        return merchant;
+      }
+    }
+
+    if (plaidName) {
+      merchant = await this.prismaService.merchant.findFirst({
+        where: { merchantName: plaidName, accountId },
+      });
+
+      if (merchant) {
+        return merchant;
+      }
+    }
+  }
+
+  public async update({
+    id,
+    updateMerchantDto,
+  }: {
+    id: string;
+    updateMerchantDto: UpdateMerchantDto;
+  }): Promise<Merchant> {
+    return this.prismaService.merchant.update({
+      where: { id },
+      data: updateMerchantDto,
+    });
+  }
+
+  public async findOrCreate({
+    plaidName,
+    plaidId,
+    accountId,
+  }: {
+    plaidName: string;
+    plaidId: string;
+    accountId: string;
+  }): Promise<Merchant> {
+    this.logger.debug(`Finding or creating a merchant: Name: "${plaidName}" ID: "${plaidId}" for account ${accountId}`);
+    // First look for an existing merchant
+    let merchant = await this.findByPlaidNameOrPlaidId({ plaidName, plaidId, accountId });
+    if (merchant) {
+      // if found, update it
+      merchant = await this.update({
+        id: merchant.id,
+        updateMerchantDto: {
+          merchantName: plaidName,
+          plaidEntityId: plaidId,
+        },
+      });
+      this.logger.debug(`Found existing merchant: Name: "${merchant.merchantName}" ID: "${merchant.plaidEntityId}" for account ${accountId}`);
+      return merchant;
+    }
+
+    // if not found, create it
+    merchant = await this.prismaService.merchant.create({
+      data: {
+        merchantName: plaidName,
+        plaidEntityId: plaidId,
+        accountId,
+      },
+    });
+
+    this.logger.debug(`Created new merchant: Name: "${merchant.merchantName}" ID: "${merchant.plaidEntityId}" for account ${accountId}`);
+    return merchant;
   }
 }

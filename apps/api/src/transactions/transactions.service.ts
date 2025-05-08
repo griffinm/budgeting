@@ -5,7 +5,7 @@ import { PlaidTransactionsResponse } from "@budgeting/plaid";
 import { AccessToken, AccountTransaction, Prisma, SyncEvent, SyncEventStatus } from "@prisma/client";
 import { PagedResponse } from "@budgeting/types";
 import { TransactionFilter } from "./dto/transaction-filter";
-
+import { MerchantsService } from "../merchants/merchants.service";
 @Injectable()
 export class TransactionsService {
   private readonly logger = new Logger(TransactionsService.name);
@@ -13,6 +13,7 @@ export class TransactionsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly plaidService: PlaidService,
+    private readonly merchantsService: MerchantsService,
   ) {}
 
   public async getTransactionTotal({
@@ -76,7 +77,7 @@ export class TransactionsService {
   }
 
   public async syncTransactions({
-    accountId
+    accountId,
   }: {
     accountId: string;
   }): Promise<void> {
@@ -131,7 +132,6 @@ export class TransactionsService {
 
     await this.handleAccountUpdates({ plaidTransactions, syncEvent, accountId });
     
-    
     if (plaidTransactions.has_more) {
       // There are more transactions to fetch, so recursively call this function
       await this.updateTransactions({ accessToken: newAccessToken, syncEvent, accountId });
@@ -167,18 +167,12 @@ export class TransactionsService {
     this.logger.debug(`Creating ${plaidTransactions.transactionsAdded.length} new transactions`);
     for (const plaidTransaction of plaidTransactions.transactionsAdded) {
       let merchantIdForDb: string | null = null;
-      if (plaidTransaction.merchant_entity_id) {
+      if (plaidTransaction.merchant_entity_id || plaidTransaction.merchant_name) {
         try {
-          const merchant = await this.prismaService.merchant.upsert({
-            where: { plaidEntityId: plaidTransaction.merchant_entity_id },
-            create: {
-              plaidEntityId: plaidTransaction.merchant_entity_id,
-              merchantName: plaidTransaction.merchant_name,
-              accountId,
-            },
-            update: {
-              ...(plaidTransaction.merchant_name && { merchantName: plaidTransaction.merchant_name }),
-            },
+          const merchant = await this.merchantsService.findOrCreate({
+            plaidName: plaidTransaction.merchant_name,
+            plaidId: plaidTransaction.merchant_entity_id,
+            accountId,
           });
           merchantIdForDb = merchant.id;
         } catch (error) {
@@ -244,15 +238,10 @@ export class TransactionsService {
 
       if (plaidTransaction.merchant_entity_id) {
         try {
-          const merchant = await this.prismaService.merchant.upsert({
-            where: { plaidEntityId: plaidTransaction.merchant_entity_id },
-            create: {
-              plaidEntityId: plaidTransaction.merchant_entity_id,
-              merchantName: plaidTransaction.merchant_name,
-            },
-            update: {
-              ...(plaidTransaction.merchant_name && { merchantName: plaidTransaction.merchant_name }),
-            },
+          const merchant = await this.merchantsService.findOrCreate({
+            plaidName: plaidTransaction.merchant_name,
+            plaidId: plaidTransaction.merchant_entity_id,
+            accountId,
           });
           updateData.merchant = { connect: { id: merchant.id } };
         } catch (error) {
