@@ -1,9 +1,8 @@
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { Table, TableBody, TableCell, TableHead, TableRow, Link } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { merchantName } from "@budgeting/ui/utils/merchantName";
 import { urls } from "@budgeting/ui/utils/urls";
-import { EditableMerchantCategory } from "./EditableMerchantCategory";
+import { EditableMerchantCategory } from "@budgeting/ui/components/EditableMerchantCategory";
 import { EditableLabel } from "../EditableLabel/EditableLabel";
 
 export interface MerchantsTableProps {

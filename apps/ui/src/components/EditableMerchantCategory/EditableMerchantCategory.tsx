@@ -1,8 +1,7 @@
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
-import { merchantName } from "@ui/utils/merchantName";
 import { useEffect, useState } from "react";
 import { MerchantCategoryEntity } from "@budgeting/api/merchant-category/dto/merchant-category.entity";
-import { Edit, Check, Cancel } from "@mui/icons-material";
+import { Check, Cancel } from "@mui/icons-material";
 import { IconButton, TextField, Autocomplete, CircularProgress } from "@mui/material";
 import { createMerchantCategory, fetchCategories } from "@ui/utils/api";
 import { createFilterOptions } from "@mui/material/Autocomplete";
@@ -38,15 +37,12 @@ export function EditableMerchantCategory({
 
   return (
     <div className="flex items-center gap-2 cursor-pointer h-5" onClick={() => setIsEditing(true)}>
-      <IconButton>
-        <Edit />
-      </IconButton>
       {merchantCategory?.name ? (
         <div className="px-3 py-1 rounded-full" style={{ backgroundColor: merchantCategory.color }}>
           {merchantCategory.name}
         </div>
       ) : (
-        <span className="text-gray-500">Not Categorized</span>
+        <div className="text-gray-500 hover:bg-gray-100 rounded-md p-1 transition-colors">Not Categorized</div>
       )}
     </div>
   )

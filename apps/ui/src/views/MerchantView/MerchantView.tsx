@@ -1,9 +1,11 @@
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
-import { fetchMerchant } from "@budgeting/ui/utils/api";
+import { fetchMerchant, updateMerchant } from "@budgeting/ui/utils/api";
 import { Typography, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import { MerchantTransactions } from "./MerchantTransactions";
 import { MerchantTotals } from "./MerchantTotals";
+import { EditableMerchantCategory } from "@budgeting/ui/components/EditableMerchantCategory";
+import { EditableLabel } from "@budgeting/ui/components/EditableLabel/EditableLabel";
 
 export function MerchantView({
   merchantId,
@@ -26,10 +28,42 @@ export function MerchantView({
     return <CircularProgress />;
   }
 
+  const handleMerchantCategoryUpdated = (newCategoryId: string) => {
+    updateMerchant({
+      id: merchantId,
+      updateMerchantDto: {
+        merchantCategoryId: newCategoryId,
+      },
+    }).then((resp) => {
+      setMerchant(resp.data);
+    });
+  }
+
   return (
     <div>
       <div className="mb-5">
-        <Typography variant="h4">{merchant?.merchantName}</Typography>
+        <EditableLabel
+          value={merchant?.friendlyName || merchant?.merchantName}
+          labelTypographyProps={{ variant: "h4" }}
+          onSave={(newFriendlyName) => {
+            updateMerchant({
+              id: merchantId,
+              updateMerchantDto: {
+                friendlyName: newFriendlyName,
+              },
+            }).then((resp) => {
+              setMerchant(resp.data);
+            });
+          }}
+        />
+      </div>
+
+      <div className="mb-5">
+        <EditableMerchantCategory
+          merchant={merchant}
+          onCategoryUpdated={handleMerchantCategoryUpdated}
+          merchantCategory={merchant?.merchantCategory}
+        />
       </div>
 
       <div className="mb-10">
