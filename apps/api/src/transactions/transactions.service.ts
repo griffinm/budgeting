@@ -148,6 +148,21 @@ export class TransactionsService {
     }
   }
 
+  public async updateOldTransactionMerchant(): Promise<void> {
+    const transactionsWithoutMerchant = await this.prismaService.accountTransaction.findMany({
+      where: {
+        merchantId: null,
+      },
+    });
+
+    for (const transaction of transactionsWithoutMerchant) {
+      await this.merchantsService.findOrCreate({
+        accountId: transaction.accountId,
+        plaidName: transaction.name,
+        plaidId: transaction.connectedAccountId,
+      });
+    }
+  }
   private async handleAccountUpdates({
     plaidTransactions,
     syncEvent,
@@ -167,10 +182,10 @@ export class TransactionsService {
     this.logger.debug(`Creating ${plaidTransactions.transactionsAdded.length} new transactions`);
     for (const plaidTransaction of plaidTransactions.transactionsAdded) {
       let merchantIdForDb: string | null = null;
-      if (plaidTransaction.merchant_entity_id || plaidTransaction.merchant_name) {
+      if (plaidTransaction.merchant_entity_id || plaidTransaction.name) {
         try {
           const merchant = await this.merchantsService.findOrCreate({
-            plaidName: plaidTransaction.merchant_name,
+            plaidName: plaidTransaction.name,
             plaidId: plaidTransaction.merchant_entity_id,
             accountId,
           });
@@ -236,10 +251,10 @@ export class TransactionsService {
         syncEvent: { connect: { id: syncEvent.id } },
       };
 
-      if (plaidTransaction.merchant_entity_id) {
+      if (plaidTransaction.merchant_entity_id || plaidTransaction.name) {
         try {
           const merchant = await this.merchantsService.findOrCreate({
-            plaidName: plaidTransaction.merchant_name,
+            plaidName: plaidTransaction.name,
             plaidId: plaidTransaction.merchant_entity_id,
             accountId,
           });
