@@ -111,9 +111,10 @@ model AccountTransaction {
 
 model Merchant {
   id                 String               @id @default(uuid()) @map("id")
+  plaidEntityId      String?              @unique @map("plaid_entity_id")
   logoUrl            String?              @map("logo_url")
-  name               String?              @map("name")
   merchantName       String?              @map("merchant_name")
+  website            String?              @map("website")
   address            String?              @map("address")
   city               String?              @map("city")
   state              String?              @map("state")

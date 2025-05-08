@@ -4,7 +4,7 @@ import { Nav } from "@budgeting/ui/components";
 export function AppLayout() {
   return (
     <div className="flex flex-row">
-      <div className="w-[250px]">
+      <div className="w-[200px]">
         <Nav />
       </div>
       <div className="grow p-5 mb-4 max-w-[900px]">

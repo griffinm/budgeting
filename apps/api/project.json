@@ -22,6 +22,13 @@
         }
       }
     },
+    "repl": {
+      "executor": "nx:run-script",
+      "dependsOn": ["build"],
+      "options": {
+        "script": "api:repl"
+      }
+    },
     "docker-build": {
       "dependsOn": ["build"],
       "command": "docker build -f apps/api/Dockerfile . -t api"
