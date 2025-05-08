@@ -7,26 +7,19 @@ import { EditableMerchantCategory } from "./EditableMerchantCategory";
 
 export interface MerchantsTableProps {
   merchants: MerchantEntity[];
-  accountId: string;
   onMerchantCategoryUpdate?: (merchantId: string, newCategoryId: string | null) => void;
 }
 
 export function MerchantsTable({
   merchants,
-  accountId,
   onMerchantCategoryUpdate,
 }: MerchantsTableProps) {
-
   const handleCategoryUpdated = (merchantId: string, newCategoryId: string | null) => {
     console.log(`Merchant ${merchantId} category updated to ${newCategoryId}`);
     if (onMerchantCategoryUpdate) {
       onMerchantCategoryUpdate(merchantId, newCategoryId);
     }
   };
-
-  if (!accountId) {
-    console.warn("MerchantsTable: accountId prop is missing, EditableMerchantCategory may not work correctly.");
-  }
 
   return (
     <Table>
@@ -50,7 +43,6 @@ export function MerchantsTable({
               <EditableMerchantCategory
                 merchantId={merchant.id}
                 initialCategoryId={merchant.merchantCategoryId}
-                accountId={accountId}
                 onCategoryUpdated={(newCategoryId) => handleCategoryUpdated(merchant.id, newCategoryId)}
               />
             </TableCell>

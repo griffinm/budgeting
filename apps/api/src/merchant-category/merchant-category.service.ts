@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { MerchantCategory, Prisma } from "@prisma/client";
+import { MerchantCategory } from "@prisma/client";
+import { CreateMerchantCategoryDto } from "./dto/create.dto";
 
 @Injectable()
 export class MerchantCategoryService {
@@ -15,15 +16,23 @@ export class MerchantCategoryService {
         accountId,
       },
       orderBy: {
-        // Optional: Add default ordering if desired, e.g., by name
-        // name: "asc", 
+        name: "asc",
       }
     });
   }
 
-  // Future methods for MerchantCategory might include:
-  // findOne(id: string, accountId: string): Promise<MerchantCategory | null>
-  // create(data: Prisma.MerchantCategoryCreateInput): Promise<MerchantCategory>
-  // update(id: string, data: Prisma.MerchantCategoryUpdateInput, accountId: string): Promise<MerchantCategory>
-  // remove(id: string, accountId: string): Promise<MerchantCategory>
+  public async create({
+    accountId,
+    createMerchantCategoryDto,
+  }: {
+    accountId: string;
+    createMerchantCategoryDto: CreateMerchantCategoryDto;
+  }): Promise<MerchantCategory> {
+    return this.prismaService.merchantCategory.create({
+      data: {
+        ...createMerchantCategoryDto,
+        accountId,
+      },
+    });
+  }
 } 

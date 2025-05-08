@@ -1,37 +1,32 @@
 import { baseClient } from "./baseClient";
 import { AxiosResponse } from "axios";
+import { MerchantCategoryEntity } from "@budgeting/api/merchant-categories/dto/merchant-category.entity";
+import { CreateMerchantCategoryDto } from "@budgeting/api/merchant-categories/dto/create.dto";
 
-// Ideally, this would come from a shared types definition, e.g., @budgeting/api/merchant-categories/dto/merchant-category.entity
-export interface MerchantCategoryEntity {
-  id: string;
-  name: string;
-  accountId: string;
-  // Add any other relevant fields from your backend entity
-}
+const baseUrl = "/merchant-categories";
 
-const baseUrl = "/merchants";
-
-export async function fetchCategoryById(
-  categoryId: string,
-  accountId: string
-): Promise<AxiosResponse<MerchantCategoryEntity>> {
-  // The accountId might be passed as a query param or be part of the baseClient's auth handling
+export async function fetchCategoryById({
+  categoryId,
+}: {
+  categoryId: string;
+}): Promise<AxiosResponse<MerchantCategoryEntity>> {
   return baseClient.get<MerchantCategoryEntity>(
-    `${baseUrl}/${categoryId}?accountId=${encodeURIComponent(accountId)}`
+    `${baseUrl}/${categoryId}`
   );
 }
 
-export async function fetchCategoriesByAccount(
-  accountId: string
-): Promise<AxiosResponse<MerchantCategoryEntity[]>> {
+export async function fetchCategories(): Promise<AxiosResponse<MerchantCategoryEntity[]>> {
   return baseClient.get<MerchantCategoryEntity[]>(
-    `${baseUrl}/account/${encodeURIComponent(accountId)}`
+    `${baseUrl}`
   );
 }
 
-export async function createMerchantCategory(
-  name: string,
-  accountId: string
-): Promise<AxiosResponse<MerchantCategoryEntity>> {
-  return baseClient.post<MerchantCategoryEntity>(`${baseUrl}`, { name, accountId });
+export async function createMerchantCategory({
+  name,
+  description,
+}: {
+  name: string;
+  description?: string;
+}): Promise<AxiosResponse<MerchantCategoryEntity>> {
+  return baseClient.post<MerchantCategoryEntity>(`${baseUrl}`, { name, description });
 } 

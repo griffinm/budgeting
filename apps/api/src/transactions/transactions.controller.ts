@@ -5,7 +5,6 @@ import {
   UseGuards, 
   Req, 
   Query,
-  Param
 } from "@nestjs/common";
 import { TransactionsService } from "./transactions.service";
 import { AuthGuard } from "@budgeting/api/auth";

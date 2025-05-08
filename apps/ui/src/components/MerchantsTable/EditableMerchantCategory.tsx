@@ -10,11 +10,11 @@ import {
 } from '@mui/material';
 import {
   fetchCategoryById as apiFetchCategoryById,
-  fetchCategoriesByAccount as apiFetchCategoriesByAccount,
+  fetchCategories as apiFetchCategories,
   createMerchantCategory as apiCreateMerchantCategory,
-  MerchantCategoryEntity,
 } from '../../utils/api/merchantCategoryClient';
 import { updateMerchantCategory as apiUpdateMerchantCategory } from '../../utils/api/merchantClient';
+import { MerchantCategoryEntity } from '@budgeting/api/merchant-categories/dto/merchant-category.entity';
 
 interface EditableMerchantCategoryProps {
   merchantId: string;
@@ -43,7 +43,7 @@ export function EditableMerchantCategory({
       return;
     }
     setIsLoadingName(true);
-    apiFetchCategoryById(categoryId, accountId)
+    apiFetchCategoryById({ categoryId })
       .then(response => {
         setCurrentCategoryName(response.data?.name || 'Uncategorized');
       })
@@ -54,7 +54,7 @@ export function EditableMerchantCategory({
       .finally(() => {
         setIsLoadingName(false);
       });
-  }, [accountId]);
+  }, []);
 
   useEffect(() => {
     fetchAndSetCategoryName(initialCategoryId);
@@ -63,7 +63,7 @@ export function EditableMerchantCategory({
   const handleOpenPopover = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
     setIsLoadingCategories(true);
-    apiFetchCategoriesByAccount(accountId)
+    apiFetchCategories()
       .then(response => {
         setAvailableCategories(response.data || []);
       })
@@ -82,54 +82,21 @@ export function EditableMerchantCategory({
   };
 
   const handleCategoryChange = (event: any, newValue: string | MerchantCategoryEntity | null) => {
-    handleClosePopover();
-    setIsSubmitting(true);
-
-    let categoryPromise: Promise<MerchantCategoryEntity | null>;
-
-    if (typeof newValue === 'string') {
-      const potentialNewName = newValue.startsWith('Add "') && newValue.endsWith('"')
-        ? newValue.substring(5, newValue.length - 1)
-        : newValue;
-      const existing = availableCategories.find(c => c.name.toLowerCase() === potentialNewName.toLowerCase());
-      if (existing) {
-        categoryPromise = Promise.resolve(existing);
-      } else {
-        categoryPromise = apiCreateMerchantCategory(potentialNewName, accountId)
-          .then(response => {
-            const newCat = response.data;
-            setAvailableCategories(prev => [...prev, newCat]);
-            return newCat;
-          });
-      }
-    } else if (newValue?.id) {
-      categoryPromise = Promise.resolve(newValue);
-    } else {
-      categoryPromise = Promise.resolve(null);
+    if (!newValue || typeof newValue !== 'string' || newValue === 'add-') {
+      return;
     }
 
-    categoryPromise
-      .then(resolvedCategoryData => {
-        const categoryIdToUpdate = resolvedCategoryData?.id || null;
-        return apiUpdateMerchantCategory(merchantId, categoryIdToUpdate)
-          .then(() => {
-            return resolvedCategoryData;
-          });
-      })
-      .then(resolvedCategoryDataAfterUpdate => {
-        const finalCategoryId = resolvedCategoryDataAfterUpdate?.id || null;
-        const finalCategoryName = resolvedCategoryDataAfterUpdate?.name || 'Uncategorized';
+    if (newValue.startsWith('add-')) {
+      // Create new category
+      const newCategoryName = newValue.slice(4);
+      apiCreateMerchantCategory({ name: newCategoryName })
+        .then(response => {
+          console.log('New category created:', response.data);
+        })
+        .catch(error => console.error('Failed to create new category:', error));
+    }
 
-        setCurrentCategoryName(finalCategoryName);
-        onCategoryUpdated(finalCategoryId);
-      })
-      .catch(error => {
-        console.error('Failed to update or create category:', error);
-        fetchAndSetCategoryName(initialCategoryId);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+    console.log('handleCategoryChange', newValue);
   };
 
   const open = Boolean(anchorEl);
