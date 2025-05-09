@@ -61,6 +61,9 @@ export class MerchantsService {
     
     return this.prismaService.merchant.findUnique({
       where: { id },
+      include: {
+        merchantCategory: true,
+      },
     });
   }
 

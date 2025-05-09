@@ -1,3 +1,4 @@
+import { PageHeader } from "@budgeting/ui/components/PageHeader";
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { MerchantsTable } from "@budgeting/ui/components/MerchantsTable/MerchantsTable";
 import { fetchMerchants, updateMerchant } from "@budgeting/ui/utils/api/merchantClient";
@@ -53,9 +54,8 @@ export function MerchantsView() {
   }
   return (
     <div>
-      <div className="mb-5">
-        <Typography variant="h3">Merchants</Typography>
-      </div>
+      <PageHeader title="Merchants" />
+
       {merchantsLoading ? (
         <CircularProgress />
       ) : (

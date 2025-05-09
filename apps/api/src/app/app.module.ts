@@ -10,6 +10,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
 import { BalanceModule } from '../balances/balance.module';
 import { MerchantsModule } from '../merchants/merchants.module';
 import { MerchantCategoryModule } from '../merchant-category/merchant-category.module';
+import { SpendModule } from '../Spend/spend.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MerchantCategoryModule } from '../merchant-category/merchant-category.m
     TransactionsModule,
     UsersModule,
     MerchantsModule,
+    SpendModule,
   ],
   controllers: [AppController],
   providers: [AppService],

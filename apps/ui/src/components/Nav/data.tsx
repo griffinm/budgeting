@@ -1,9 +1,11 @@
+import { urls } from "@budgeting/ui/utils/urls";
 import { 
   Home,
   Receipt,
   AccountBalance,
   Person,
   Store,
+  Category,
 } from "@mui/icons-material"
 
 // ----------------------------------------------------------------------
@@ -13,18 +15,23 @@ export const NAV_ITEMS = [
     items: [
       {
         title: 'Dashboard',
-        path: '/',
+        path: urls.home,
         icon: <Home />,
       },
       {
         title: 'Transactions',
-        path: '/transactions',
+        path: urls.transactions,
         icon: <Receipt />,
       },
       {
         title: 'Merchants',
-        path: '/merchants',
+        path: urls.merchants,
         icon: <Store />,
+      },
+      {
+        title: 'Categories',
+        path: urls.categories,
+        icon: <Category />,
       },
     ],
   },
@@ -33,12 +40,12 @@ export const NAV_ITEMS = [
     items: [
       {
         title: 'My Accounts',
-        path: '/accounts',
+        path: urls.accounts,
         icon: <AccountBalance />,
       },
       {
         title: 'Profile',
-        path: '/profile',
+        path: urls.profile,
         icon: <Person />,
       },
     ],

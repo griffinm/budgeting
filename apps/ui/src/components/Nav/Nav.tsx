@@ -1,5 +1,3 @@
-import { useState, useCallback } from 'react';
-
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { NavSectionVertical } from './nav-section';

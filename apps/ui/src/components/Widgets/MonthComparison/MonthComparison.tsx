@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCumlativeDailySpend } from "@budgeting/ui/utils/api";
 import { DailySpend } from "@budgeting/types";
-import { Box, Card, CardContent, CardHeader, CircularProgress, Stack, styled, Typography } from "@mui/material";
+import { Box, Card, CardContent, CardHeader, CircularProgress, styled } from "@mui/material";
 import ApexChart from 'react-apexcharts';
 import { getFinalSpendTotal, getSpendTotalOnDay } from "./utils";
 import { formatCurrency } from "@budgeting/ui/utils/formatters";

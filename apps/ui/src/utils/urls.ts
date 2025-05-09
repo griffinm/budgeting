@@ -5,4 +5,8 @@ export const urls = {
   transactions: '/transactions',
   merchants: '/merchants',
   merchant: (merchantId: string) => `/merchants/${merchantId}`,
+  categories: '/categories',
+  category: (categoryId: string) => `/categories/${categoryId}`,
+  accounts: '/accounts',
+  profile: '/profile',
 }
