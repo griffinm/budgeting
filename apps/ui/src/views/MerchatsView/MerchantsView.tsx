@@ -2,25 +2,65 @@ import { PageHeader } from "@budgeting/ui/components/PageHeader";
 import { MerchantEntity } from "@budgeting/api/merchants/dto/merchant.entity";
 import { MerchantsTable } from "@budgeting/ui/components/MerchantsTable/MerchantsTable";
 import { fetchMerchants, updateMerchant } from "@budgeting/ui/utils/api/merchantClient";
-import { CircularProgress, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { CircularProgress } from "@mui/material";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 export function MerchantsView() {
   const [merchants, setMerchants] = useState<MerchantEntity[]>([]);
   const [merchantsLoading, setMerchantsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const initialLoadDone = useRef(false);
 
-  useEffect(() => {
-    setMerchantsLoading(true);
+  const loadMerchants = useCallback((search?: string) => {
+    console.log("loadMerchants called with search:", search);
+    
+    if (search !== undefined) {
+      setIsSearching(true);
+    } else {
+      setMerchantsLoading(true);
+    }
+
+    console.log("Calling fetchMerchants with params:", { page: 1, pageSize: 25, search });
     fetchMerchants({
       page: 1,
       pageSize: 25,
+      search: search,
     }).then((res) => {
-      setMerchants(res.data);
+      console.log("fetchMerchants returned:", res, "merchants");
+      if (Array.isArray(res.data)) {
+        setMerchants(res.data);
+      } else if (res.data && Array.isArray(res.data.data)) {
+        setMerchants(res.data.data);
+      } else {
+        console.error("Unexpected response format:", res);
+        setMerchants([]);
+      }
+    })
+    .catch(err => {
+      console.error("Error fetching merchants:", err);
+      setMerchants([]);
     })
     .finally(() => {
       setMerchantsLoading(false);
+      setIsSearching(false);
     });
   }, []);
+
+  // Perform initial load only once
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      loadMerchants();
+      initialLoadDone.current = true;
+    }
+  }, [loadMerchants]);
+
+  // Stable search handler that doesn't trigger rerenders
+  const handleSearch = useCallback((query: string) => {
+    console.log("MerchantsView handling search:", query);
+    const searchTerm = query.trim() || undefined;
+    console.log("Using search term:", searchTerm);
+    loadMerchants(searchTerm);
+  }, [loadMerchants]);
 
   const handleMerchantCategoryUpdated = async (merchantId: string, newCategoryId: string) => {
     const response = await updateMerchant({
@@ -52,17 +92,20 @@ export function MerchantsView() {
       return m;
     }));
   }
+  
   return (
     <div>
       <PageHeader title="Merchants" />
 
-      {merchantsLoading ? (
+      {merchantsLoading && merchants.length === 0 ? (
         <CircularProgress />
       ) : (
         <MerchantsTable
           merchants={merchants}
           onMerchantCategoryUpdate={handleMerchantCategoryUpdated}
           onMerchantNicknameUpdate={handleMerchantFriendlyNameUpdated}
+          onSearch={handleSearch}
+          isLoading={isSearching}
         />
       )}
     </div>

@@ -10,11 +10,15 @@ export async function fetchMerchant(id: string): Promise<AxiosResponse<MerchantE
   return baseClient.get(`${baseUrl}/${id}`);
 }
 
-export async function fetchMerchants(
-  pagedRequest: PagedRequest,
-): Promise<PagedResponse<MerchantEntity>> {
-  const resp = await baseClient.get(`${baseUrl}`, { params: pagedRequest });
+export interface MerchantsRequest extends PagedRequest {
+  search?: string;
+}
 
+export async function fetchMerchants(
+  request: MerchantsRequest,
+): Promise<PagedResponse<MerchantEntity>> {
+  const resp = await baseClient.get(`${baseUrl}`, { params: request });
+  
   return resp.data;
 }
 
@@ -26,4 +30,10 @@ export async function updateMerchant({
   updateMerchantDto: UpdateMerchantDto;
 }): Promise<AxiosResponse<MerchantEntity>> {
   return baseClient.patch<MerchantEntity>(`${baseUrl}/${id}`, updateMerchantDto);
+}
+
+export function searchMerchants(query: string) {
+  return baseClient.get<MerchantEntity[]>(`${baseUrl}/search`, {
+    params: { query }
+  });
 }

@@ -1,7 +1,7 @@
 import { baseClient } from "./baseClient";
 import { AxiosResponse } from "axios";
-import { MerchantCategoryEntity } from "@budgeting/api/merchant-categories/dto/merchant-category.entity";
-import { CreateMerchantCategoryDto } from "@budgeting/api/merchant-categories/dto/create.dto";
+import { MerchantCategoryEntity } from "@budgeting/api/merchant-category/dto/merchant-category.entity";
+import { CreateMerchantCategoryDto } from "@budgeting/api/merchant-category/dto/create-merchant-category.dto";
 
 const baseUrl = "/merchant-categories";
 

@@ -5,3 +5,4 @@ export * from './balanceClient';
 export * from './merchantClient';
 export * from './merchantCategoryClient';
 export * from './spendClient';
+export * from './authClient';

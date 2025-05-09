@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { MerchantCategoryEntity } from "@budgeting/api/merchant-category/dto/merchant-category.entity";
 import { Check, Cancel } from "@mui/icons-material";
 import { IconButton, TextField, Autocomplete, CircularProgress } from "@mui/material";
-import { createMerchantCategory, fetchCategories } from "@ui/utils/api";
+import { createMerchantCategory, fetchCategories } from "@budgeting/ui/utils/api";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 
 const filter = createFilterOptions<Partial<MerchantCategoryEntity>>();
 const newNamePrefix = "Create:";
 
 interface EditableMerchantCategoryProps {
-  merchant: MerchantEntity;
+  merchant: MerchantEntity | null;
   onCategoryUpdated: (newCategoryId: string) => void;
   merchantCategory?: MerchantCategoryEntity;
 }
@@ -21,6 +21,10 @@ export function EditableMerchantCategory({
   merchantCategory,
 }: EditableMerchantCategoryProps) {
   const [isEditing, setIsEditing] = useState(false);
+
+  if (!merchant) {
+    return <div className="text-gray-500">Loading merchant data...</div>;
+  }
 
   const handleCategoryUpdated = (newCategoryId: string) => {
     onCategoryUpdated(newCategoryId);
@@ -76,10 +80,18 @@ function MerchantCategoryEditor({
     if (!selectedCategory.id && selectedCategory.name) {
       // This is a new category
       const newName = selectedCategory.name.startsWith(newNamePrefix) ? selectedCategory.name.slice(newNamePrefix.length).trim() : selectedCategory.name;
-      const createResponse = await createMerchantCategory({
-        name: newName,
-      });
-      setSelectedCategory(createResponse.data);
+      try {
+        const createResponse = await createMerchantCategory({
+          name: newName,
+        });
+        // Instead of just updating the state, immediately pass the new ID
+        // to onCategoryUpdated so it gets assigned to the merchant
+        onCategoryUpdated(createResponse.data.id);
+        return; // Exit early since we've already called onCategoryUpdated
+      } catch (error) {
+        console.error("Failed to create category:", error);
+        return;
+      }
     }
 
     if (selectedCategory.id) {
@@ -131,7 +143,17 @@ function MerchantCategoryEditor({
             }
           }}
           renderInput={(params) =>
-            <TextField {...params} label="Category" size="small" />
+            <TextField 
+              {...params} 
+              label="Category" 
+              size="small"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  saveCategory();
+                }
+              }}
+            />
           }
         />
       </div>
