@@ -151,11 +151,11 @@ view DailyBalance {
   date                  DateTime    @map("date")
   runningBalance        Float     @map("running_balance")
 
-//   ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
+  // ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
 
-//   @@id([connectedAccountId, date])
-//   @@map("daily_balance")
-// }
+  @@id([connectedAccountId, date])
+  @@map("daily_balance")
+}
 
 enum SyncEventStatus {
   STARTED
