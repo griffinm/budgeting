@@ -5,6 +5,7 @@ import { DateRangeFilter } from './components/DateRangeFilter';
 import { TotalSummaryCard } from './components/TotalSummaryCard';
 import { MonthlyBreakdown } from './components/MonthlyBreakdown';
 import { SelectChangeEvent } from "@mui/material";
+import { LoadingSpinner } from '@budgeting/ui/components/Loading';
 
 interface SpendSummaryDisplayProps {
   spendSummary: SpendSummaryDto | null;
@@ -79,25 +80,7 @@ export function SpendSummaryDisplay({ spendSummary, loading, onFilterChange }: S
   if (loading) {
     return (
       <Card sx={{ mt: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '16rem' }}>
-            <Box sx={{ display: 'inline-block' }}>
-              <Box
-                sx={{
-                  animation: 'spin 1s linear infinite',
-                  borderRadius: '50%',
-                  height: '3rem',
-                  width: '3rem',
-                  borderBottom: '2px solid currentColor',
-                  '@keyframes spin': {
-                    '0%': { transform: 'rotate(0deg)' },
-                    '100%': { transform: 'rotate(360deg)' },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        </CardContent>
+        <LoadingSpinner />
       </Card>
     );
   }
@@ -123,7 +106,16 @@ export function SpendSummaryDisplay({ spendSummary, loading, onFilterChange }: S
 
       <TotalSummaryCard
         totalAmount={spendSummary.totalAmount}
-        monthlyData={monthlyData}
+        monthlyData={monthlyData.map(data => ({
+          month: data.month,
+          amount: data.amount,
+          categories: data.categories.map(cat => ({
+            categoryId: cat.categoryId,
+            name: cat.categoryName,
+            color: cat.categoryColor,
+            amount: parseFloat(cat.totalAmount)
+          }))
+        }))}
       />
 
       <MonthlyBreakdown monthlyData={monthlyData} />

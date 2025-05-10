@@ -8,20 +8,35 @@ import {
   Box
 } from '@mui/material';
 import ApexChart from 'react-apexcharts';
-import { green, grey, blue } from "@mui/material/colors";
-
-// Chart colors
-const colors = [blue[500], green[500], grey[400], blue[300], green[300]];
 
 interface TotalSummaryCardProps {
   totalAmount: string;
   monthlyData: Array<{
     month: string;
     amount: number;
+    categories?: Array<{
+      categoryId: string;
+      name: string;
+      color: string;
+      amount: number;
+    }>;
   }>;
 }
 
 export function TotalSummaryCard({ totalAmount, monthlyData }: TotalSummaryCardProps) {
+  // Extract category names and colors for the pie chart
+  const categoryNames = monthlyData.length > 0 && monthlyData[0].categories 
+    ? monthlyData[0].categories.map(category => category.name)
+    : [];
+    
+  const categoryColors = monthlyData.length > 0 && monthlyData[0].categories 
+    ? monthlyData[0].categories.map(category => category.color)
+    : [];
+    
+  const categoryAmounts = monthlyData.length > 0 && monthlyData[0].categories 
+    ? monthlyData[0].categories.map(category => category.amount)
+    : [];
+
   return (
     <Card>
       <CardHeader
@@ -37,7 +52,7 @@ export function TotalSummaryCard({ totalAmount, monthlyData }: TotalSummaryCardP
                 type="bar"
                 height={350}
                 options={{
-                  colors: colors,
+                  colors: categoryColors.length > 0 ? [categoryColors[0]] : ['#000'],
                   chart: {
                     toolbar: {
                       show: false,
@@ -84,18 +99,15 @@ export function TotalSummaryCard({ totalAmount, monthlyData }: TotalSummaryCardP
                 type="pie"
                 height={350}
                 options={{
-                  colors: colors,
-                  labels: monthlyData.length > 0 
-                    ? Object.entries(monthlyData[0]).filter(([key]) => key !== 'month' && key !== 'amount' && key !== 'categories' && key !== 'totalAmount')
-                        .map(([key]) => key)
-                    : [],
+                  colors: categoryColors.length > 0 ? categoryColors : ['#1976d2', '#2e7d32', '#9e9e9e'],
+                  labels: categoryNames.length > 0 ? categoryNames : [],
                   legend: {
                     position: 'bottom',
                   },
                   dataLabels: {
                     enabled: true,
                     formatter: (val, opts) => {
-                      return `${opts.w.globals.labels[opts.seriesIndex]}: ${val.toFixed(1)}%`;
+                      return `${opts.w.globals.labels[opts.seriesIndex]}: ${typeof val === 'number' ? val.toFixed(1) : val}%`;
                     },
                   },
                   tooltip: {
@@ -104,11 +116,7 @@ export function TotalSummaryCard({ totalAmount, monthlyData }: TotalSummaryCardP
                     },
                   },
                 }}
-                series={monthlyData.length > 0 
-                  ? Object.entries(monthlyData[0]).filter(([key]) => key !== 'month' && key !== 'amount' && key !== 'categories' && key !== 'totalAmount')
-                      .map(([_, value]) => value as number)
-                  : []
-                }
+                series={categoryAmounts.length > 0 ? categoryAmounts : []}
               />
             </Box>
           </Grid>

@@ -23,20 +23,10 @@ export function MerchantsTable({
 }: MerchantsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  
-  // Debugging: Log when search props change
-  useEffect(() => {
-    console.log("MerchantsTable received onSearch function", !!onSearch);
-  }, [onSearch]);
-  
-  // Debugging: Log when search query changes
-  useEffect(() => {
-    console.log("Search query changed:", searchQuery);
-  }, [searchQuery]);
+
   
   // Debounce search query to avoid excessive API calls
   useEffect(() => {
-    console.log("Setting up debounce timer for:", searchQuery);
     const timerId = setTimeout(() => {
       setDebouncedQuery(searchQuery);
     }, 300);
@@ -46,9 +36,7 @@ export function MerchantsTable({
   
   // Trigger search when debounced query changes
   useEffect(() => {
-    console.log("Debounced query changed to:", debouncedQuery);
     if (onSearch) {
-      console.log("Calling onSearch with:", debouncedQuery);
       onSearch(debouncedQuery);
     }
   }, [debouncedQuery, onSearch]);
@@ -56,21 +44,8 @@ export function MerchantsTable({
   // Handle input change directly
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log("Search input changed to:", value);
     setSearchQuery(value);
   };
-
-  // Add this effect to log when the merchants prop changes
-  useEffect(() => {
-    console.log("MerchantsTable received merchants:", merchants.length);
-  }, [merchants]);
-
-  // Fix: Reset search query when component receives new merchants from parent
-  useEffect(() => {
-    if (merchants && merchants.length > 0 && debouncedQuery && !isLoading) {
-      console.log("Search results received, keeping current search query");
-    }
-  }, [merchants, debouncedQuery, isLoading]);
 
   return (
     <div>

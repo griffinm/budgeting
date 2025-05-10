@@ -89,6 +89,7 @@ export class SpendService {
         
         categories.push({
           categoryId,
+          categoryColor: categoryTransactions[0].merchant.merchantCategory.color,
           categoryName: categoryTransactions[0].merchant.merchantCategory.name,
           transactions: categoryTransactions,
           totalAmount: categoryTotal.toFixed(2)

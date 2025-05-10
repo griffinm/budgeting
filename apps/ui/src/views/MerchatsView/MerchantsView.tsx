@@ -11,22 +11,18 @@ export function MerchantsView() {
   const [isSearching, setIsSearching] = useState(false);
   const initialLoadDone = useRef(false);
 
-  const loadMerchants = useCallback((search?: string) => {
-    console.log("loadMerchants called with search:", search);
-    
+  const loadMerchants = useCallback((search?: string) => {   
     if (search !== undefined) {
       setIsSearching(true);
     } else {
       setMerchantsLoading(true);
     }
 
-    console.log("Calling fetchMerchants with params:", { page: 1, pageSize: 25, search });
     fetchMerchants({
       page: 1,
       pageSize: 25,
       search: search,
     }).then((res) => {
-      console.log("fetchMerchants returned:", res, "merchants");
       if (Array.isArray(res.data)) {
         setMerchants(res.data);
       } else if (res.data && Array.isArray(res.data.data)) {
@@ -37,7 +33,6 @@ export function MerchantsView() {
       }
     })
     .catch(err => {
-      console.error("Error fetching merchants:", err);
       setMerchants([]);
     })
     .finally(() => {
@@ -56,9 +51,7 @@ export function MerchantsView() {
 
   // Stable search handler that doesn't trigger rerenders
   const handleSearch = useCallback((query: string) => {
-    console.log("MerchantsView handling search:", query);
     const searchTerm = query.trim() || undefined;
-    console.log("Using search term:", searchTerm);
     loadMerchants(searchTerm);
   }, [loadMerchants]);
 

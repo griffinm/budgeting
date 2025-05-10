@@ -9,6 +9,9 @@ export class CategoryTransactionsDto {
   @IsString()
   categoryName: string;
 
+  @IsString()
+  categoryColor: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AccountTransactionEntity)

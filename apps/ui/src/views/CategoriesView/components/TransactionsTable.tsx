@@ -24,7 +24,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                 {new Date(transaction.date).toLocaleDateString()}
               </td>
               <td style={{ padding: '0.5rem 0' }}>
-                {transaction.merchant.name}
+                {transaction.merchant.merchantName}
               </td>
               <td style={{ padding: '0.5rem 0', textAlign: 'right' }}>
                 ${parseFloat(transaction.amount).toFixed(2)}

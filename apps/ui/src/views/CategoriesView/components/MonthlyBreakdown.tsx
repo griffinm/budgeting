@@ -57,7 +57,10 @@ export function MonthlyBreakdown({ monthlyData }: MonthlyBreakdownProps) {
                 </Typography>
 
                 {/* Category breakdown chart for the current month */}
-                <CategoryChart categories={monthData.categories} />
+                <CategoryChart 
+                  categories={monthData.categories} 
+                  categoryColors={monthData.categories.map(category => category.categoryColor)}
+                />
 
                 {/* Category breakdown for the month */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

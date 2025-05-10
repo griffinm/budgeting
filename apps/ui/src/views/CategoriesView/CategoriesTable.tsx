@@ -25,16 +25,21 @@ export function CategoriesTable({
           key={category.id} 
           onClick={() => onSelectCategory(category)} 
           sx={{
-            padding: 2,
-            backgroundColor: isSelected(category) ? 'primary.main' : 'background.paper',
-            color: isSelected(category) ? 'primary.contrastText' : 'text.primary',
+            padding: 1,
+            borderColor: category.color,
+            borderWidth: 4,
+            borderStyle: 'solid',
+            backgroundColor: isSelected(category) ? category.color : 'background.paper',
             cursor: 'pointer',
             '&:hover': {
               backgroundColor: lightGrey,
             },
             transition: 'background-color 0.3s ease, color 0.3s ease',
         }}>
-          <Typography variant="h6">{category.name}</Typography>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }}></div>
+            <Typography variant="h6">{category.name}</Typography>
+          </div>
         </Paper>
       ))}
     </div>

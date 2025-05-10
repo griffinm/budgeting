@@ -17,7 +17,7 @@ export interface MerchantsRequest extends PagedRequest {
 export async function fetchMerchants(
   request: MerchantsRequest,
 ): Promise<PagedResponse<MerchantEntity>> {
-  const resp = await baseClient.get(`${baseUrl}`, { params: request });
+  const resp = await baseClient.get(`${baseUrl}`, { params: request }) as AxiosResponse<PagedResponse<MerchantEntity>>;
   
   return resp.data;
 }
