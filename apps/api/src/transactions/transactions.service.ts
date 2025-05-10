@@ -2,10 +2,10 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PlaidService } from "@budgeting/plaid";
 import { PlaidTransactionsResponse } from "@budgeting/plaid";
-import { AccessToken, AccountTransaction, SyncEvent, SyncEventStatus } from "@prisma/client";
+import { AccessToken, AccountTransaction, Prisma, SyncEvent, SyncEventStatus } from "@prisma/client";
 import { PagedResponse } from "@budgeting/types";
 import { TransactionFilter } from "./dto/transaction-filter";
-
+import { MerchantsService } from "../merchants/merchants.service";
 @Injectable()
 export class TransactionsService {
   private readonly logger = new Logger(TransactionsService.name);
@@ -13,28 +13,44 @@ export class TransactionsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly plaidService: PlaidService,
+    private readonly merchantsService: MerchantsService,
   ) {}
 
-  public async findAllForAccount({
+  public async getTransactionTotal({
+    transactionFilter,
+    accountId,
+  }: {
+    transactionFilter: TransactionFilter;
+    accountId: string;
+  }): Promise<number> {
+    const transactions = await this.searchTransactions({ transactionFilter, accountId, page: 1, pageSize: 10000 });
+    return transactions.data.reduce((acc, transaction) => acc + transaction.amount, 0);
+  }
+
+  public async searchTransactions({
+    transactionFilter,
     accountId,
     page = 1,
     pageSize = 10,
-    filter,
   }: {
+    transactionFilter: TransactionFilter;
     accountId: string;
     page: number;
     pageSize: number;
-    filter: TransactionFilter;
   }): Promise<PagedResponse<AccountTransaction>> {
-    this.logger.debug(`Finding all transactions for account ${accountId.substring(0, 7)}`);
+    this.logger.log(`Searching for transactions for account ${accountId} with merchantId ${transactionFilter.merchantId} and connectedAccountId ${transactionFilter.connectedAccountId} and startDate ${transactionFilter.startDate} and endDate ${transactionFilter.endDate}`);
 
     const transactions = await this.prismaService.accountTransaction.findMany({
-      where: { 
+      where: {
         accountId,
-        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
+        ...(transactionFilter.merchantId && { merchantId: transactionFilter.merchantId }),
+        ...(transactionFilter.startDate && { date: { gte: transactionFilter.startDate } }),
+        ...(transactionFilter.endDate && { date: { lte: transactionFilter.endDate } }),
+        ...(transactionFilter.connectedAccountId && { connectedAccountId: transactionFilter.connectedAccountId }),
       },
       include: {
         connectedAccount: true,
+        merchant: true,
       },
       skip: (page - 1) * pageSize,
       take: parseInt(pageSize.toString()),
@@ -42,13 +58,14 @@ export class TransactionsService {
         date: "desc",
       },
     });
-
     const totalRecords = await this.prismaService.accountTransaction.count({
-      where: { 
+      where: {
         accountId,
-        ...(filter.connectedAccountId && { connectedAccountId: filter.connectedAccountId }),
-      },
-
+        ...(transactionFilter.merchantId && { merchantId: transactionFilter.merchantId }),
+        ...(transactionFilter.startDate && { date: { gte: transactionFilter.startDate } }),
+        ...(transactionFilter.endDate && { date: { lte: transactionFilter.endDate } }),
+        ...(transactionFilter.connectedAccountId && { connectedAccountId: transactionFilter.connectedAccountId }),
+      }
     });
 
     return {
@@ -60,7 +77,7 @@ export class TransactionsService {
   }
 
   public async syncTransactions({
-    accountId
+    accountId,
   }: {
     accountId: string;
   }): Promise<void> {
@@ -91,59 +108,6 @@ export class TransactionsService {
       });
     }
   }
-
-  public async enrichTransactions(): Promise<void> {
-    this.logger.log('Starting transaction enrichment process.');
-    const transactionsToEnrich = await this.prismaService.accountTransaction.findMany({
-      where: { merchantId: null },
-      // Optionally, add a take here to limit the number of transactions processed at once
-      // take: 100, 
-    });
-
-    this.logger.debug(`Found ${transactionsToEnrich.length} transactions to enrich.`);
-
-    for (const transaction of transactionsToEnrich) {
-      try {
-        this.logger.debug(`Enriching transaction ${transaction.id}`);
-        const enrichedPlaidTransaction = await this.plaidService.enrichTransaction(transaction);
-
-        // Using top-level properties from ClientProvidedEnrichedTransaction based on Plaid docs
-        const plaidMerchantName = enrichedPlaidTransaction.enrichments.merchant_name;
-        const plaidEntityId = enrichedPlaidTransaction.enrichments.entity_id;
-        const plaidLogoUrl = enrichedPlaidTransaction.enrichments.logo_url;
-        const plaidWebsite = enrichedPlaidTransaction.enrichments.website;
-
-        if (plaidMerchantName && plaidEntityId) {
-          // Ensure prisma generate has run for plaidEntityId to be recognized in MerchantWhereUniqueInput
-          const merchant = await this.prismaService.merchant.upsert({
-            where: { plaidEntityId: plaidEntityId }, 
-            update: {
-              merchantName: plaidMerchantName,
-              logoUrl: plaidLogoUrl,
-              website: plaidWebsite,
-            },
-            create: {
-              plaidEntityId: plaidEntityId,
-              merchantName: plaidMerchantName,
-              logoUrl: plaidLogoUrl,
-              website: plaidWebsite,
-            },
-          });
-
-          await this.prismaService.accountTransaction.update({
-            where: { id: transaction.id },
-            data: { merchantId: merchant.id },
-          });
-          this.logger.debug(`Successfully enriched transaction ${transaction.id} and linked to merchant ${merchant.id} (${plaidMerchantName})`);
-        } else {
-          this.logger.warn(`Enrichment did not return sufficient merchant details (name or entity_id) for transaction ${transaction.id}. Name: ${plaidMerchantName}, Entity ID: ${plaidEntityId}`);
-        }
-      } catch (error) {
-        this.logger.error(`Error enriching transaction ${transaction.id}: ${error.message}`, error.stack);
-      }
-    }
-    this.logger.log('Transaction enrichment process completed.');
-  }
   
   private async updateTransactions({
     accessToken,  
@@ -168,7 +132,6 @@ export class TransactionsService {
 
     await this.handleAccountUpdates({ plaidTransactions, syncEvent, accountId });
     
-    
     if (plaidTransactions.has_more) {
       // There are more transactions to fetch, so recursively call this function
       await this.updateTransactions({ accessToken: newAccessToken, syncEvent, accountId });
@@ -181,9 +144,25 @@ export class TransactionsService {
           endedAt: new Date(),
         },
       });
+      this.logger.log(`Sync for accessToken ${newAccessToken.id} (syncEvent ${syncEvent.id}) completed.`);
     }
   }
 
+  public async updateOldTransactionMerchant(): Promise<void> {
+    const transactionsWithoutMerchant = await this.prismaService.accountTransaction.findMany({
+      where: {
+        merchantId: null,
+      },
+    });
+
+    for (const transaction of transactionsWithoutMerchant) {
+      await this.merchantsService.findOrCreate({
+        accountId: transaction.accountId,
+        plaidName: transaction.name,
+        plaidId: transaction.connectedAccountId,
+      });
+    }
+  }
   private async handleAccountUpdates({
     plaidTransactions,
     syncEvent,
@@ -197,52 +176,105 @@ export class TransactionsService {
       plaidTransactions.transactionsAdded.length + 
       plaidTransactions.transactionsModified.length + 
       plaidTransactions.transactionsRemoved.length;
-    this.logger.debug(`Processing ${totalTransactions} transactions`);
+    this.logger.debug(`Processing ${totalTransactions} transactions for syncEvent ${syncEvent.id}`);
 
     // Create new transactions
     this.logger.debug(`Creating ${plaidTransactions.transactionsAdded.length} new transactions`);
+    for (const plaidTransaction of plaidTransactions.transactionsAdded) {
+      let merchantIdForDb: string | null = null;
+      if (plaidTransaction.merchant_entity_id || plaidTransaction.name) {
+        try {
+          const merchant = await this.merchantsService.findOrCreate({
+            plaidName: plaidTransaction.name,
+            plaidId: plaidTransaction.merchant_entity_id,
+            accountId,
+          });
+          merchantIdForDb = merchant.id;
+        } catch (error) {
+          this.logger.error(`Error upserting merchant with plaidEntityId ${plaidTransaction.merchant_entity_id}: ${error.message}`, error.stack);
+        }
+      }
 
-    await this.prismaService.accountTransaction.createMany({
-      data: plaidTransactions.transactionsAdded.map((transaction) => ({
-        id: transaction.transaction_id,
-        accountId,
-        connectedAccountId: transaction.account_id,
-        amount: transaction.amount,
-        name: transaction.name,
-        authorizedDate: new Date(transaction.authorized_date),
-        date: new Date(transaction.date),
-        checkNumber: transaction.check_number,
-        currencyCode: transaction.iso_currency_code,
-        paymentChannel: transaction.payment_channel,
-        pending: transaction.pending,
-        plaidCategoryPrimary: transaction.personal_finance_category.primary,
-        plaidCategoryDetail: transaction.personal_finance_category.detailed,
-        merchantId: transaction.merchant_entity_id,
-        syncEventId: syncEvent.id,
-        merchantId: transaction.merchant_entity_id,
-      })),
-    });
+      try {
+        await this.prismaService.accountTransaction.upsert({
+          where: { id: plaidTransaction.transaction_id },
+          create: {
+            id: plaidTransaction.transaction_id,
+            accountId,
+            connectedAccountId: plaidTransaction.account_id,
+            amount: plaidTransaction.amount,
+            name: plaidTransaction.name,
+            authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : null,
+            date: plaidTransaction.date ? new Date(plaidTransaction.date) : null,
+            checkNumber: plaidTransaction.check_number,
+            currencyCode: plaidTransaction.iso_currency_code,
+            paymentChannel: plaidTransaction.payment_channel,
+            pending: plaidTransaction.pending,
+            plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+            plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+            syncEventId: syncEvent.id,
+            merchantId: merchantIdForDb,
+          },
+          update: {
+            amount: plaidTransaction.amount,
+            name: plaidTransaction.name,
+            authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : null,
+            date: plaidTransaction.date ? new Date(plaidTransaction.date) : null,
+            checkNumber: plaidTransaction.check_number,
+            currencyCode: plaidTransaction.iso_currency_code,
+            paymentChannel: plaidTransaction.payment_channel,
+            pending: plaidTransaction.pending,
+            plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+            plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+            syncEventId: syncEvent.id,
+            merchantId: merchantIdForDb,
+          }
+        });
+      } catch (error) {
+        this.logger.error(`Error creating transaction ${plaidTransaction.transaction_id}: ${error.message}`, error.stack);
+      }
+    }
 
     // Update existing transactions
     this.logger.debug(`Updating ${plaidTransactions.transactionsModified.length} modified transactions`);
-    for (const transaction of plaidTransactions.transactionsModified) {
-      await this.prismaService.accountTransaction.update({
-        where: {
-          id: transaction.transaction_id,
-        },
-        data: {
-          date: new Date(transaction.date),
-          pending: transaction.pending,
-          plaidCategoryPrimary: transaction.personal_finance_category.primary,
-          plaidCategoryDetail: transaction.personal_finance_category.detailed,
-          amount: transaction.amount,
-          name: transaction.name,
-          authorizedDate: new Date(transaction.authorized_date),
-          checkNumber: transaction.check_number,
-          currencyCode: transaction.iso_currency_code,
-          syncEventId: syncEvent.id,
-        },
-      });
+    for (const plaidTransaction of plaidTransactions.transactionsModified) {
+      const updateData: Prisma.AccountTransactionUpdateInput = {
+        date: plaidTransaction.date ? new Date(plaidTransaction.date) : undefined,
+        pending: plaidTransaction.pending,
+        plaidCategoryPrimary: plaidTransaction.personal_finance_category?.primary,
+        plaidCategoryDetail: plaidTransaction.personal_finance_category?.detailed,
+        amount: plaidTransaction.amount,
+        name: plaidTransaction.name,
+        authorizedDate: plaidTransaction.authorized_date ? new Date(plaidTransaction.authorized_date) : undefined,
+        checkNumber: plaidTransaction.check_number,
+        currencyCode: plaidTransaction.iso_currency_code,
+        syncEvent: { connect: { id: syncEvent.id } },
+      };
+
+      if (plaidTransaction.merchant_entity_id || plaidTransaction.name) {
+        try {
+          const merchant = await this.merchantsService.findOrCreate({
+            plaidName: plaidTransaction.name,
+            plaidId: plaidTransaction.merchant_entity_id,
+            accountId,
+          });
+          updateData.merchant = { connect: { id: merchant.id } };
+        } catch (error) {
+          this.logger.error(`Error upserting merchant for modified transaction ${plaidTransaction.transaction_id} with plaidEntityId ${plaidTransaction.merchant_entity_id}: ${error.message}`, error.stack);
+        }
+      } else {
+        // If you want to explicitly disconnect a merchant if plaidTransaction.merchant_entity_id is null:
+        // updateData.merchant = { disconnect: true };
+      }
+
+      try {
+        await this.prismaService.accountTransaction.update({
+          where: { id: plaidTransaction.transaction_id },
+          data: updateData,
+        });
+      } catch (error) {
+        this.logger.error(`Error updating transaction ${plaidTransaction.transaction_id}: ${error.message}`, error.stack);
+      }
     }
 
     // Remove deleted transactions

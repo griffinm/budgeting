@@ -9,6 +9,9 @@ const HomePage = lazy(() => import('../pages/home'));
 const AccountsPage = lazy(() => import('../pages/accounts'));
 const ProfilePage = lazy(() => import('../pages/profile'));
 const TransactionsPage = lazy(() => import('../pages/transactions'));
+const MerchantPage = lazy(() => import('../pages/merchant'));
+const MerchantsPage = lazy(() => import('../pages/merchants'));
+const CategoriesPage = lazy(() => import('../pages/categories'));
 
 export function AppRoutes() {
 
@@ -40,6 +43,18 @@ export function AppRoutes() {
         <Route 
           path="/transactions" 
           element={withSuspense(TransactionsPage)} 
+        />
+        <Route 
+          path="/merchants/:merchantId" 
+          element={withSuspense(MerchantPage)} 
+        />
+        <Route 
+          path="/merchants" 
+          element={withSuspense(MerchantsPage)} 
+        />
+        <Route 
+          path="/categories" 
+          element={withSuspense(CategoriesPage)} 
         />
       </Route>
     </Routes>

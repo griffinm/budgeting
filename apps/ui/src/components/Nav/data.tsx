@@ -1,41 +1,38 @@
+import { urls } from "@budgeting/ui/utils/urls";
 import { 
   Home,
   Receipt,
   AccountBalance,
   Person,
+  Store,
+  Category,
 } from "@mui/icons-material"
 
 // ----------------------------------------------------------------------
 
 export const NAV_ITEMS = [
   {
-    // subheader: 'Marketing',
     items: [
       {
         title: 'Dashboard',
-        path: '/',
+        path: urls.home,
         icon: <Home />,
-        // caption: 'Display only admin role',
       },
       {
         title: 'Transactions',
-        path: '/Transactions',
+        path: urls.transactions,
         icon: <Receipt />,
       },
-      // {
-      //   title: 'Blog',
-      //   path: '#blog',
-      //   icon: <Home />,
-      //   children: [
-      //     {
-      //       title: 'Item 1',
-      //       path: '#blog/item-1',
-      //       caption: 'Display caption',
-      //       info: '+2',
-      //     },
-      //     { title: 'Item 2', path: '#blog/item-2' },
-      //   ],
-      // },
+      {
+        title: 'Merchants',
+        path: urls.merchants,
+        icon: <Store />,
+      },
+      {
+        title: 'Categories',
+        path: urls.categories,
+        icon: <Category />,
+      },
     ],
   },
   {
@@ -43,12 +40,12 @@ export const NAV_ITEMS = [
     items: [
       {
         title: 'My Accounts',
-        path: '/accounts',
+        path: urls.accounts,
         icon: <AccountBalance />,
       },
       {
         title: 'Profile',
-        path: '/profile',
+        path: urls.profile,
         icon: <Person />,
       },
     ],

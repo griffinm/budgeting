@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 import { TransactionTableRow } from "./TransactionTableRow";
 
+export type TransactionTableColumn = "date" | "account" | "amount" | "merchant" | "actions";
+
 interface Props {
   transactions: AccountTransactionEntity[];
   currentPage: number;
@@ -20,6 +22,7 @@ interface Props {
   onPageSizeChange: (pageSize: number) => void;
   totalRecords: number;
   loading: boolean;
+  showColumns?: TransactionTableColumn[];
 }
 
 export function TransactionTable({ 
@@ -30,24 +33,27 @@ export function TransactionTable({
   onPageSizeChange,
   totalRecords,
   loading,
+  showColumns,
 }: Props) {
+  const defaultShowColumns: TransactionTableColumn[] = ["date", "account", "amount", "merchant", "actions"];
+  const cols = showColumns ?? defaultShowColumns;
 
   return (
     <Card>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Account</TableCell>
-            <TableCell>Amount</TableCell>
-            <TableCell>Merchant</TableCell>
-            <TableCell></TableCell>
+            {cols.includes("date") && <TableCell>Date</TableCell>}
+            {cols.includes("account") && <TableCell>Account</TableCell>}
+            {cols.includes("amount") && <TableCell>Amount</TableCell>}
+            {cols.includes("merchant") && <TableCell>Merchant</TableCell>}
+            {cols.includes("actions") && <TableCell></TableCell>}
           </TableRow>
         </TableHead>
 
         <TableBody>
           {transactions.map((transaction) => (
-            <TransactionTableRow key={transaction.id} transaction={transaction} />
+            <TransactionTableRow key={transaction.id} transaction={transaction} showColumns={cols} />
           ))}
           {!loading && transactions.length === 0 && (
             <TableRow>

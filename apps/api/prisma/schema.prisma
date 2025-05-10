@@ -31,7 +31,8 @@ model Account {
   transactions      AccountTransaction[] @relation("AccountTransactionsAccount")
   connectedAccounts ConnectedAccount[]   @relation("ConnectedAccountsAccount")
   users             User[]               @relation("AccountUsers")
-
+  merchants         Merchant[]           @relation("MerchantsAccount")
+  merchantCategories MerchantCategory[] @relation("MerchantCategoriesAccount")
   @@map("accounts")
 }
 
@@ -111,7 +112,7 @@ model AccountTransaction {
 
 model Merchant {
   id                 String               @id @default(uuid()) @map("id")
-  plaidEntityId      String?              @unique @map("plaid_entity_id")
+  plaidEntityId      String?              @map("plaid_entity_id")
   logoUrl            String?              @map("logo_url")
   merchantName       String?              @map("merchant_name")
   website            String?              @map("website")
@@ -121,15 +122,34 @@ model Merchant {
   zipCode            String?              @map("zip_code")
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
+  friendlyName       String?              @map("friendly_name")
+  accountId          String?              @map("account_id")
+  merchantCategoryId String?              @map("merchant_category_id")
   AccountTransaction AccountTransaction[] @relation("AccountTransactionsMerchant")
+  account            Account?             @relation("MerchantsAccount", fields: [accountId], references: [id])
+  merchantCategory   MerchantCategory?    @relation("MerchantsMerchantCategory", fields: [merchantCategoryId], references: [id])
 
   @@map("merchants")
 }
 
-// view DailyBalance {
-//   connectedAccountId    String      @map("connected_account_id")
-//   date                  DateTime    @map("date")
-//   runningBalance        Float     @map("running_balance")
+model MerchantCategory {
+  id String @id @default(uuid()) @map("id")
+  accountId String @map("account_id")
+  name String @map("name")
+  description String? @map("description")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  account Account @relation("MerchantCategoriesAccount", fields: [accountId], references: [id])
+  merchants Merchant[] @relation("MerchantsMerchantCategory")
+  color String @map("color")
+
+  @@map("merchant_categories")
+}
+
+view DailyBalance {
+  connectedAccountId    String      @map("connected_account_id")
+  date                  DateTime    @map("date")
+  runningBalance        Float     @map("running_balance")
 
 //   ConnectedAccount ConnectedAccount @relation("DailyBalancesConnectedAccount", fields: [connectedAccountId], references: [id])
 

@@ -1,4 +1,6 @@
+import { CircularProgress } from '@mui/material';
 import './styles.css';
+
 
 export function Loading() {
   return (
@@ -7,6 +9,14 @@ export function Loading() {
         <img src='/assets/logo/logo-small.png' alt="logo" />
       </div>
       <div className="loader" />
+    </div>
+  )
+}
+
+export function LoadingSpinner() {
+  return (
+    <div className="flex items-center flex-col justify-center mt-[100px] h-[250px]">
+      <CircularProgress />
     </div>
   )
 }
